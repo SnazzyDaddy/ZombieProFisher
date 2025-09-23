@@ -1,993 +1,700 @@
-#include <iostream>
-#include <vector>
-#include <random>
-#include <ctime>
-#include <string>
-#include <chrono>
-#include <thread>
-#include <cstdlib>
-#include <fstream>
-#include <random>
+import os
+import platform
+import random
+import time
+from colorama import Fore, Style, init
+init(autoreset=True)
 
-using namespace std;
-int main() {
-    ifstream ZPF_Picture;
-   int totaldmg, totalluck, health = 8, max_health = 8, hunger = 10; //stats
-   
-   int baseluck = 0, basedmg = 1, modhealth = 0, modluck = 0, moddmg = 0; //base luck/damage is how much your character has as a stat. modluck/dmg is how much a weapon/rod modifier adds.
-   
-   int location = 0; //location
-   char newlocation;
-   char currentLocationChar;
-   
-   int machineparts = 0, wood = 0, stone = 0; //inventory
-   string fishingrod = "Stick And String", weapon = "Fists", weapondisplay, armor = " "; //weapon and rod
-   char eyeclr, hairclr, size; //character description
-   string name, fish; // 
-   int money = 10; // money
-   
-   char choice, weaponchoice, shopchoice, armorchoice, craftchoice, foodchoice; 
-   string rodchoice;
-   
-   int cookbook;
-   
-   int woodgathered, rockgathered, machinerygathered, fishgathered, forage_success, weapon_found, hutchinson_dialogue; // resource gathering / RNG stuff
-   int birdwatching, echoes;
-   
-   int commonfish = 0, rarefish = 0, epicfish = 0, legendaryfish = 0;
-   
-   int commoncashout, rarecashout, epiccashout, legendarycashout, totalcashout;
-   
-  int turns;
-   
-   int zombiespawn;
-   // Common fish: 2 Food, 5 Gold
-    // Catfish..............1-10
-    // Smallmouth bass......11-20
-    // Crappie..............21-30
-    // Bluegill.............31-40
-    
-   // Rare fish: 3 Food, 10 Gold
-    // Largemouth bass......41-45
-    // Trout................46-50
-    // Snail................51-55
-    // Frog.................56-60
-    
-   // Epic Fish: 4 Food, 20 Gold
-    // Sturgeon.............61-63
-    // Walleye..............64-66
-    // Paddlefish...........67-69
-    
-   // Legendary Fish: 5 Food, 40 Gold
-    //Zombie Fish...........70-71
-    // Mighty Bluegill......72-74
-    
-    
-    
-    
-    
-    
-    // Weapon list:
-    // Fists... 1 DMG
-    // 1) Knife... 1 DMG
-    // 2) Machete.. 2 DMG
-    // 3) Axe... 3 dmg
-    // 4) pistol.. 4 dmg
-    // 5) smg... 5 dmg
-    // 6) shotgun... 6 dmg
-    // 7) ar-15... 7 dmg
-    // 8) sniper... 8 dmg
-    // 9) brass knucks.. 9 dmg
-    // 10) mighty bluegills spiked bat... 10 dmg
-    
-    //rods:
-    //stick and string... 0 luck
-    //common rod... 1 luck
-    // sturdy rod... 2 luck
-    // premium rod... 3 luck
-    // deep sea rod... 4 luck
-    // jody barrs rod... 5 luck
-    
-   
-   random_device rd;
-   
-    cout << "Welcome to zombie pro fisher - byte sized!" << endl;
-    ZPF_Picture.open("boat.txt");
-    this_thread::sleep_for(chrono::seconds(1));
-    cout << "╔══════════════════════════════════╗" << endl;
-    cout << "║  ~*~ Character Customization ~*~ ║" << endl;
-    cout << "╚══════════════════════════════════╝" << endl;
-    
-    //character customization - eye color
-    while (true) {
-    cout << " " << endl;
-    cout << "Type 'A' for Blue eyes (+2 luck), type 'B' for Brown eyes (+1 damage), or type 'C' for Green eyes (2+ Max Health)" << endl;
-    cin >> eyeclr;
-    if (eyeclr == 'A') {
-        baseluck = baseluck + 2;
-        break;
-    } else if (eyeclr == 'B') {
-        basedmg = basedmg + 1;
-        break;
-    } else if (eyeclr == 'C') {
-        max_health = max_health + 2;
-        break;
-    } else if (eyeclr != 'B' || 'A' || 'C') {
-        cout << "Invalid entry." << endl;
-    }
-}
-     //character customization - hair color
-    while (true) {
-    cout << " " << endl;
-    cout << "Type 'A' for Blonde hair (+2 luck) or type 'B' for Brown hair (+1 damage) or type 'C' for Black hair (+2 Max Health) " << endl;
-    cin >> hairclr;
-    if (hairclr == 'A') {
-        baseluck = baseluck + 2;
-        break;
-    } else if (hairclr == 'B') {
-        basedmg = basedmg + 1;
-        break;
-    } else if (hairclr == 'C') {
-        max_health = max_health + 2;
-        break;
-    } else if (hairclr != 'B' || 'A' || 'C') {
-        cout << "Invalid entry." << endl;
-    }
-}
-    //character customization - size
-    while (true) {
-    cout << " " << endl;
-    cout << "Type 'A' for to be short (+2 luck) or type 'B' to be tall (+1 damage) or type 'C' to be medium sized (+2 Max Health) " << endl;
-    cin >> size;
-    if (size == 'A') {
-        baseluck = baseluck + 2;
-        break;
-    } else if (size == 'B') {
-        basedmg = basedmg + 1;
-        break;
-    } else if (size == 'C') {
-        max_health = max_health + 2;
-        break;
-    } else if (size != 'B' || 'A' || 'C') {
-        cout << "Invalid entry." << endl;
-    }
+# ----------------------------
+# Utility
+# ----------------------------
+def clear_screen():
+    if platform.system() == 'Windows':
+        os.system('cls')
+    else:
+        os.system('clear')
+
+def slow_print(text, delay=0.02):
+    for c in text:
+        print(c, end='', flush=True)
+        time.sleep(delay)
+    print()
+
+def choose(prompt, options):
+    while True:
+        slow_print(prompt)
+        for key, desc in options.items():
+            slow_print(f"[{key}] {desc}")
+        choice = input("> ").strip().lower()
+        clear_screen()
+        if choice in options:
+            return choice
+        slow_print("Invalid entry.")
+
+# ----------------------------
+# Data
+# ----------------------------
+LOCATIONS = ["Forest", "Lake", "Nuclear Plant", "Shack"]
+
+# Fishing species pools by category (merged/extended from C++)
+FISH_POOLS = {
+    "common": [
+        "Catfish", "Smallmouth Bass", "Crappie", "Bluegill", "Sunfish"
+    ],
+    "rare": [
+        "Largemouth Bass", "Walleye", "Gar", "Pike", "Turtle",
+        "Mutant Catfish", "Brook Trout"
+    ],
+    "epic": [
+        "Sturgeon", "Paddlefish", "Brown Trout", "Muskellunge"
+    ],
+    "legendary": [
+        "Zombie Fish", "Mighty Bluegill"
+    ],
 }
 
-    cout << "Now, what is your hero's name? ";
-    cin >> name;
-    
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    
-    health = max_health;
-    totaldmg = moddmg + basedmg;
-   totalluck = modluck + baseluck;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << "Starting your journey now! Here are your stats as of character customization: " << endl;
-    cout << " " << endl;
-    cout << "NAME: " << name << endl;
-    cout << "--------------" << endl;
-    cout << "HEALTH: " << max_health << endl;
-    cout << "--------------" << endl;
-    cout << "DAMAGE: " << totaldmg << endl;
-    cout << "--------------" << endl;
-    cout << "LUCK: " << totalluck << endl;
-    cout << "--------------" << endl;
-    
-    //Spawn location 1 = Forest
-    //Spawn location 2 = Lake
-    //Spawn location 3 = Nuclear Plant
-    //Spawn location 4 = Shack
-    mt19937 gen(rd());
-    uniform_int_distribution<> distri(1, 4);
-    
+# Weapon shop (name, weapon_mod_damage, cost)
+WEAPONS = [
+    ("Knife", 1, 5),
+    ("Machete", 2, 10),
+    ("Axe", 3, 20),
+    ("Pistol", 4, 40),
+    ("SMG", 5, 80),
+    ("Shotgun", 6, 100),
+    ("AR-15", 7, 160),
+    ("Sniper", 8, 200),
+    ("Brass Knuckles", 9, 250),
+    ("Spiked Bat", 10, 400),
+]
 
-    
-    cout << "SPAWNING CHARACTER..." << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    cout << " " << endl;
-    this_thread::sleep_for(chrono::seconds(2));
-    location = distri(gen);
-    if (location == 1) {
-        cout << "The air is brisk and the leaves crunch as you make your way through the FOREST." << endl;
-        currentLocationChar = 'A';
-    } else if (location == 2) {
-        cout << "You see your reflection shimmer through the still waters of the LAKE" << endl;
-        currentLocationChar = 'B';
-    } else if (location == 3) {
-        cout << "You have a feeling you shouldn't be here... You make your way through the abandoned cooridors of the NUCLEAR PLANT" << endl;
-        currentLocationChar = 'C';
-    } else {
-        cout << "You see a friendly face tending to his tackle shop and a crackling fire warms you up at the SHACK. " << endl;
-        currentLocationChar = 'D';
-    }
-    
-    
-    
-    // WHILE LOOP STARTS HERE       !!!!!!!!!!!
-    // WHILE LOOP STARTS HERE       !!!!!!!!!!!
-    // WHILE LOOP STARTS HERE       !!!!!!!!!!!
-    
-    int zombie_maxhp, zombie_dmgtaken, zombie_dmggiven;
-    char zombiechoice;
-    int runaway, moneyearned, DONTDELETE = 0;
-    
-    while(true) {
-   turns++;
-   totaldmg = moddmg + basedmg;
-   totalluck = modluck + baseluck;
-   max_health = max_health + modhealth;
-   if (hunger > 10) {
-       hunger = 10;
-   }
-   if (health > max_health){
-       health = max_health;
-   }
-   if (hunger < 0) {
-       hunger = 0;
-       health = health - 1;
-       cout << " " << endl;
-       cout << "You are starving! Forage for some food or buy some at the SHACK!" << endl;
-       cout << "-1 HP" << endl;
-   }
-   
-   uniform_int_distribution<> distri(0, 10);
-   zombiespawn = distri(gen);
-   if (zombiespawn >= 9 && location != 4 || zombiespawn >= 5 && location == 3) {
-       while (true){
-           if(DONTDELETE != 1) {
-               DONTDELETE = 1;
-               uniform_int_distribution<> distri(5, 15);
-        zombie_maxhp = distri(gen);
-           }
-        if (health <= 0) {
-            break;
-        }
-       cout << "_________________________" << endl;
-       cout << "    ZOMBIE ENCOUNTER     " << endl;
-       cout << "_________________________" << endl;
-       cout << "ZOMBIE HP: " << zombie_maxhp << endl;
-       cout << "YOUR HP: " << health << endl;
-       cout << " " << endl;
-       
-           cout << "WHAT DO YOU DO?" << endl;
-           cout << "A) Attack" << endl;
-           cout << "B) Run away" << endl;
-           cin >> zombiechoice;
-           
-           if (zombiechoice == 'A') {
-               uniform_int_distribution<> distri(0,3);
-               zombie_dmgtaken = distri(gen) + totaldmg;
-               cout << "The zombie took " << zombie_dmgtaken << " damage!" << endl;
-               cout << " " << endl;
-               zombie_maxhp = zombie_maxhp - zombie_dmgtaken;
-                       if (zombie_maxhp <= 0){
-            cout << "You killed the zombie!" << endl;
-            uniform_int_distribution<> distri(1,10);
-            moneyearned = distri(gen);
-            cout << "You got $" << moneyearned << " from the zombie." << endl;
-            money = money + moneyearned;
-            DONTDELETE = 0;
-            break;
-        }
-               
-               this_thread::sleep_for(chrono::seconds(1));
-               
-               if (1 == 1) {
-                   uniform_int_distribution<> distri(0,9);
-                zombie_dmggiven = distri(gen);
-                cout << "The zombie did " << zombie_dmggiven << " damage to you!" << endl;
-                health = health - zombie_dmggiven;
-               }
-           }else if (zombiechoice == 'B'){
-               uniform_int_distribution<> distri(0,20);
-               runaway = distri(gen) + (totalluck * 1.50);
-               if (runaway >= 12) {
-                   cout << "You successfully got away!" << endl;
-                   break;
-               }else {
-               cout << "The zombie caught up to you!" << endl;
-                uniform_int_distribution<> distri(0,9);
-               zombie_dmggiven = distri(gen);
-               cout << "The zombie did " << zombie_dmggiven << " damage to you!" << endl;
-               health = health - zombie_dmggiven;
-               }
-           }
-       }
+# Rod shop (name, rod_luck, cost)
+RODS = [
+    ("Common Rod", 1, 5),
+    ("Sturdy Rod", 2, 20),
+    ("Premium Rod", 3, 50),
+    ("Deep Sea Rod", 4, 100),
+    ("Jody Barrs Rod", 5, 250),
+]
 
-    
-   }
-      if (health <= 0) {
-       cout << "                          " << endl;
-       cout << "__________________________" << endl;
-       cout << "        YOU DIED          " << endl;
-       cout << "__________________________" << endl;
-       cout << "You lasted " << turns << " turns. Not bad!" << endl;
-       break;
-   }
-   
-   cout << " " << endl;
-   cout << " " << endl;
-   cout << "_________________________" << endl;
-    cout << "WHAT WOULD YOU LIKE TO DO?" << endl;
-    cout << "A) Forage" << endl;
-    cout << "B) Change locations" << endl;
-    cout << "C) Check stats / open inventory" << endl;
-    if (location == 4) {
-        cout << "D) Interact with Mr. Hutchinson" << endl;
-        cout << "E) Rest by the fire" << endl;
-    } else if (location == 3) {
-        cout << "D) Gather machine parts" << endl;
-        cout << "E) Listen to the echoes" << endl;
-    } else if (location == 2) {
-        cout << "D) Go fishing" << endl;
-        cout << "E) Gather rocks" << endl;
-    } else {
-        cout << "D) Gather wood" << endl;
-        cout << "E) Watch the birds" << endl;
-    }
-    cout << "_________________________" << endl;
-    cin >> choice;                             //MAKING YOUR DECISION
-    cout << " " << endl;
-    
-    if (choice == 'A') {
-        if (location == 3) {
-            cout << "Youre not sure theres anything safe to eat anything in here..." << endl;
-        }
-        else if (location == 4){
-            cout << "Mr. Hutchinson tells you to stop snooping around in his shop." << endl;
-        }else if (location == 1 || location == 2) {
-            hunger -= 1;
-        uniform_int_distribution<> distri(-10,32);
-        forage_success = distri(gen) + (totalluck * 1.90);
-        if (forage_success <= 0) {
-            cout << "You found nothing." << endl;
-        }else if (forage_success >= 0 && forage_success <= 10 && cookbook == 0 || forage_success >= 0 && forage_success <=5 && cookbook == 1) {
-            uniform_int_distribution<> distri(1,3);
-            health = health - distri(gen);
-            cout << "Yuck! You ate something that you probably shouldn't've." << " -" << distri(gen) << " HP." << endl;
-        }else if (forage_success >= 11 && forage_success <= 20 && cookbook == 0 || forage_success >= 6 && forage_success <=20 && cookbook == 1) {
-            cout << "You found some nuts and berries. +1 Hunger" << endl;
-            hunger = hunger + 2;
-        }else if (forage_success >= 21 && forage_success <= 25) {
-            cout << "You're not sure what you found, but the geiger counter didn't beep - so its probably safe. +2 hunger." << endl;
-            hunger = hunger + 3;
-        }else if (forage_success >= 26 && forage_success <= 30) {
-            cout << "You were able to trap some local fauna and eat a well-cooked meal. +3 hunger." << endl;
-            hunger = hunger + 4;
-        }else if (forage_success >= 31 && forage_success <=35) {
-            uniform_int_distribution<> distri(0,10);
-            weapon_found = distri(gen);
-            if (weapon_found == 0){
-                weapondisplay = "Knife";
-            }else if (weapon_found == 1){
-                weapondisplay = "Machete";
-            }else if (weapon_found == 2){
-                weapondisplay = "Axe";
-            }else if (weapon_found == 3){
-                weapondisplay = "Pistol";
-            }else if (weapon_found == 4){
-                weapondisplay = "Submachine Gun";
-            }else if (weapon_found == 5){
-                weapondisplay = "Shotgun";
-            }else if (weapon_found == 6){
-                weapondisplay = "AR-15";
-            }else if (weapon_found == 7){
-                weapondisplay = "Sniper";
-            }else if (weapon_found == 8){
-                weapondisplay = "Brass Knuckles";
-            }else if (weapon_found == 9){
-                weapondisplay = "Dual Pistols";
-            }else if (weapon_found == 10){
-                weapondisplay = "Mighty Bluegills Spiked Bat";
-            }
-            cout << "You found a weapon! Weapon found: " << weapondisplay << endl;
-            cout << "A) Take the weapon" << endl;
-            cout << "B) Scrap it" << endl;
-            
-            while(true) {
-            cin >> weaponchoice;
-            if (weaponchoice == 'A') {
-                weapon = weapondisplay;
-                moddmg = weapon_found;
-                break;
-            } else if (weaponchoice == 'B') {
-                uniform_int_distribution<> distri(0,2);
-                machinerygathered = distri(gen);
-                cout << "you took what you could from it. You got: " << machinerygathered << " machine parts." << endl;
-                cout << "you now have " << machinerygathered + machineparts << "machine parts." << endl;
-                break;
-            } else {
-                cout << "Invalid entry" << endl;
-            }
-            }
-        }else if (forage_success >= 40) {
-            cout << "You find a bright green triangular shape. It is crushed and deformed." << endl << "You're not sure what it means. On it is written in faded sharpie, '663D'." << endl;
-            cout << "You hang onto it. It seems like good luck." << endl;
-        }
-    
-        }
-    }else if (choice == 'B') {
-while (true) {
-    
-    cout << "Where would you like to go? Traveling is dangerous and takes time, be careful." << endl;
-    cout << "A) FOREST" << endl;
-    cout << "B) LAKE" << endl;
-    cout << "C) NUCLEAR PLANT" << endl;
-    cout << "D) SHACK" << endl;
-    cin >> newlocation;
-    cout << " " << endl;
+# Armor / consumables (name, type, value, cost)
+ARMOR = [
+    ("Medkit", "heal", 2, 5),
+    ("Nurse Aimees Power Kit", "fullheal", 0, 25),
+    ("Ollies Leather Coat", "maxhp", 1, 50),
+    ("Tactical Kerpants", "maxhp", 2, 100),
+    ("Clemuratan Helmet", "maxhp", 3, 150),
+]
 
-    
-    if (newlocation == currentLocationChar) {
-        cout << "You can't travel to a place you're already at." << endl;
-    } else {
-        
-        currentLocationChar = newlocation;
+FOOD = [
+    ("Sage Cookies", 2, 6),
+    ("Mrs Sierras Pasta", 4, 10),
+    ("Chicky-fi-laa", 6, 16),
+    ("Missy's Cookbook", "cookbook", 50),  # sets cookbook flag
+]
 
-        
-        switch (newlocation) {
-            case 'A':
-                cout << "The air is brisk and the leaves crunch as you make your way through the FOREST." << endl;
-                location = 1;
-                break;
-            case 'B':
-                cout << "You see your reflection shimmer through the still waters of the LAKE." << endl;
-                location = 2;
-                break;
-            case 'C':
-                cout << "You have a feeling you shouldn't be here... You make your way through the corridors of the NUCLEAR PLANT." << endl;
-                location = 3;
-                break;
-            case 'D':
-                cout << "You see a friendly face tending to his tackle shop and a crackling fire warms you up at the SHACK." << endl;
-                location = 4;
-                break;
-            default:
-                cout << "Enter a valid choice." << endl;
-                continue; 
-        }
-        break;
-    }
+# Sell values per category (C++ update)
+SELL_VALUES = {
+    "common": 3,
+    "rare": 5,
+    "epic": 7,
+    "legendary": 18,
 }
 
-    }else if (choice == 'C') {
-    cout << " " << endl;
-    cout << "NAME: " << name << endl;
-    cout << "--------------" << endl;
-    cout << "HEALTH: " << health << "/" << max_health << endl;
-    cout << "--------------" << endl;
-    cout << "DAMAGE: " << totaldmg << endl;
-    cout << "--------------" << endl;
-    cout << "LUCK: " << totalluck << endl;
-    cout << "--------------" << endl;
-    cout << "HUNGER: " << hunger << endl;
-    cout << "--------------" << endl;
-    cout << " " << endl;
-    cout << "CLOTHING: " << armor << endl;
-    cout << "FISHING ROD: " << fishingrod << endl;
-    cout << "WEAPON: " << weapon << endl;
-    cout << "--------------" << endl;
-    cout << " " << endl;
-    cout << "FISH: " << fish << endl;
-    //something to store the fish caught
-    cout << "WOOD: " << wood << endl;
-    cout << "STONE: " << stone << endl;
-    cout << "MACHINE PARTS: " << machineparts << endl;
-    cout << " " << endl;
-    cout << "MONEY: " << money << endl;
-    } else if (choice == 'D' && location == 1) {
-        uniform_int_distribution<> distri(0, 5);
-        woodgathered = distri(gen);
-        cout << " " << endl;
-        cout << "You gathered " << woodgathered << " pieces of wood" << endl;
-        cout << "You now have " << wood + woodgathered << " pieces of wood." << endl;
-        cout << " " << endl;
-        wood = wood + woodgathered;
-        hunger = hunger - 1;
-    } else if (choice == 'E' && location == 1) {
-        uniform_int_distribution<> distri(0,4);
-        birdwatching = distri(gen);
-        if (birdwatching == 1) {
-            cout << "The birds are lively today. You relax and spot many different species. +1 HP." << endl;
-            if (health > max_health) {
-                health++;
-            }
-        } else if (birdwatching == 2) {
-            cout << "There are only a few birds today. You find peace in knowing you're not the only one in solitude." << endl;
-        } else if (birdwatching ==3) {
-            cout << "There are no birds today. Its quiet and eerie. You feel uneasy. -1 Damage." << endl;
-            basedmg -= 1;
-        }else if (birdwatching == 4) {
-            cout << "You see large birds. It makes you hungry, but you feel lucky to see such large animals remaining in the apocalypse. +1 luck, -1 Hunger." << endl;
-            baseluck = baseluck + 1;
-            hunger = hunger -1;
-        }
-    } else if (choice == 'D' && location == 2) {
-        hunger -= 1;
-        uniform_int_distribution<> distri(-74,74);
-        fishgathered = distri(gen) + (totalluck * 1.90);
-        if (fishgathered <= 0) {
-            cout << "You caught nothing today..." << endl << endl;
-        } else if (fishgathered <= 10 && fishgathered > 0) {
-            cout << "You caught a Catfish!" << endl;
-            fish = fish + "Catfish, ";
-            commonfish++;
-        } else if (fishgathered >= 11 && fishgathered <= 20) {
-            cout << "You caught a Smallmouth Bass!" << endl;
-            fish = fish + "Smallmouth Bass, ";
-            commonfish++;
-        }else if (fishgathered >= 21 && fishgathered <= 30) {
-            cout << "You caught a Crappie!" << endl;
-            fish = fish + "Crappie, ";
-            commonfish++;
-        }else if (fishgathered >= 31 && fishgathered <= 40) {
-            cout << "You caught a Bluegill!" << endl;
-            fish = fish + "Bluegill, ";
-            commonfish++;
-        }else if (fishgathered >= 41 && fishgathered <= 45) {
-            cout << "You caught a Largemouth Bass!" << endl;
-            fish = fish + "Largemouth Bass, ";
-            rarefish++;
-        }else if (fishgathered >= 46 && fishgathered <= 50) {
-            cout << "You caught a Trout!" << endl;
-            fish = fish + "Trout, ";
-            rarefish++;
-        }else if (fishgathered >= 51 && fishgathered <= 55) {
-            cout << "You caught a Snail!" << endl;
-            fish = fish + "Snail, ";
-            rarefish++;
-        }else if (fishgathered >= 56 && fishgathered <= 60) {
-            cout << "You caught a Frog!" << endl;
-            fish = fish + "Frog, ";
-            rarefish++;
-        }else if (fishgathered >= 61 && fishgathered <= 63) {
-            cout << "You caught a Sturgeon!" << endl;
-            fish = fish + "Sturgeon, ";
-            epicfish++;
-        }else if (fishgathered >= 64 && fishgathered <= 66) {
-            cout << "You caught a Walleye!" << endl;
-            fish = fish + "Walleye, ";
-            rarefish++;
-        }else if (fishgathered >= 67 && fishgathered <= 69) {
-            cout << "You caught a Paddlefish!" << endl;
-            fish = fish + "Paddlefish, ";
-            rarefish++;
-        }else if (fishgathered >= 70 && fishgathered <= 71) {
-            cout << "You caught a Zombie Fish!" << endl;
-            fish = fish + "Zombie Fish, ";
-            legendaryfish++;
-        }else if (fishgathered >= 72) {
-            cout << "You caught a Mighty Bluegill!" << endl;
-            fish = fish + "Mighty Bluegill, ";
-            legendaryfish++;
-        }
-    }else if (choice == 'E' && location == 2){
-        uniform_int_distribution<> distri(0, 5);
-        rockgathered = distri(gen);
-        cout << " " << endl;
-        cout << "You gathered " << rockgathered << " pieces of stone" << endl;
-        cout << "You now have " << stone + rockgathered << " pieces of stone." << endl;
-        cout << " " << endl;
-        stone = stone + rockgathered;
-        hunger = hunger - 1;
-    }else if (choice == 'D' && location == 3){
-        uniform_int_distribution<> distri(0, 5);
-        machinerygathered = distri(gen);
-        cout << " " << endl;
-        cout << "You gathered " << machinerygathered << " pieces of machinery" << endl;
-        cout << "You now have " << machineparts + machinerygathered << " pieces of machinery." << endl;
-        cout << " " << endl;
-        machineparts = machineparts + machinerygathered;
-        hunger = hunger - 1;
-    }else if (choice == 'E' && location == 3){
-        uniform_int_distribution<> distri(1,4);
-        echoes = distri(gen);
-        if (echoes == 1) {
-            cout << "You hear the humming of a machine. It gives you hope that you too, can live. +1 HP." << endl;
-            if (health > max_health) {
-                health++;
-            }
-        } else if (echoes == 2) {
-            cout << "You hear the loud echo of water dripping in the dark, damp cooridors." << endl;
-        } else if (echoes ==3) {
-            cout << "You hear the screeches of zombies in the distant maze. It scares you. -1 damage." << endl;
-            basedmg -= 1;
-        } else if (echoes == 4) {
-            cout << "You sit and listen. You hear metal drop in the distance. Its your lucky day. +1 money." << endl;
-            money++;
-        }
-    }else if (choice == 'D' && location == 4){
-        cout << "Mr Hutchinson greets you with a warm nod and a gruffy smile." << endl;
-        uniform_int_distribution<> distri(0,4);
-        hutchinson_dialogue = distri(gen);
-        if (hutchinson_dialogue == 0){
-            cout << "MR HUTCHINSON: Its good to see a friendly face. Here's my shop." << endl;
-        }else if (hutchinson_dialogue = 1) {
-            cout << "MR HUTCHINSON: Welcome back, old timer!" << endl;
-        }else if (hutchinson_dialogue = 2) {
-            cout << "MR HUTCHINSON: Hittin the lakes already, are we " << name << "?" << endl;
-        }else if (hutchinson_dialogue = 3) {
-            cout << "MR HUTCHINSON: Ahh, " << name << " glad to see youre safe and well!" << endl;
-        }else {
-            cout << "MR HUTCHINSON: My tackle is the best in town! Glad the youngins are getting into the spirit of fishing!" << endl;
-        }
-        cout << " " << endl;
-        while (true) {
-            cout << "What would you like to do?" << endl;
-            cout << "A) Buy weapons" << endl;
-            cout << "B) Buy and sell fishing goods" << endl;
-            cout << "C) Armor Shop" << endl;
-            cout << "D) Craft" << endl;
-            cout << "E) Sage Snack Shack" << endl;
-            cout << "F) Goodbye" << endl;
-            
-            cin >> shopchoice;
-            if (shopchoice == 'A'){
-                cout << " " << endl;
-                cout << "WEAPON SHOP" << endl;
-                cout << "A) Knife.................+1 DMG......$5" << endl;
-                cout << "B) Machete...............+2 DMG......$10" << endl;
-                cout << "C) Axe...................+3 DMG......$20" << endl;
-                cout << "D) Pistol................+4 DMG......$40" << endl;
-                cout << "E) SMG...................+5 DMG......$80" << endl;
-                cout << "F) Shotgun...............+6 DMG......$160" << endl;
-                cout << "G) AR-15.................+7 DMG......$200" << endl;
-                cout << "H) Dual Pistols..........+8 DMG......$250" << endl;
-                cout << "I) Brass Knuckles........+9 DMG......$400" << endl;
-                cout << "J) Mighty Bluegills Spiked Bat.......+10 DMG......$600" << endl;
-                cout << "K) Go Back" << endl;
-                
-                cin >> weaponchoice;
-                if (weaponchoice == 'A' && money >= 5) {
-                    weapon = "Knife, +1 DMG";
-                    moddmg = 1;
-                    money = money - 5;
-                    cout << " " << endl;
-                    cout << "A quick and cunning weapon; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break;
-                }else if (weaponchoice == 'B' && money >= 10) {
-                    weapon = "Machete, +2 DMG";
-                    money = money - 10;
-                    moddmg = 2;
-                    cout << " " << endl;
-                    cout << "The blade shimmers in your hand; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break;
-                }else if (weaponchoice == 'C' && money >= 20) {
-                    weapon = "Axe, +3 DMG";
-                    moddmg = 3;
-                    money = money - 20;
-                    cout << " " << endl;
-                    cout << "The Viking Rage of Jack Stone fills you; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break;
-                }else if (weaponchoice == 'D' && money >= 40) {
-                    weapon = "Pistol, +4 DMG";
-                    moddmg = 4;
-                    money = money - 40;
-                    cout << " " << endl;
-                    cout << "A timeless classic; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break;
-                }else if (weaponchoice == 'E' && money >= 80) {
-                    weapon = "SMG, +5 DMG";
-                    moddmg = 5;
-                    money = money - 80;
-                    cout << " " << endl;
-                    cout << "Spray and pray; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break;
-                }else if (weaponchoice == 'F' && money >= 160) {
-                    weapon = "Shotgun, +6 DMG";
-                    moddmg = 6;
-                    money = money - 160;
-                    cout << " " << endl;
-                    cout << "2 shots is all it takes; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break;
-                }else if (weaponchoice == 'G' && money >= 200) {
-                    weapon = "AR-15, +7 DMG";
-                    moddmg = 7;
-                    money = money - 200;
-                    cout << " " << endl;
-                    cout << "A true soldiers first choice; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break;
-                }else if (weaponchoice == 'H' && money >= 250) {
-                    weapon = "Sniper, +8 DMG";
-                    moddmg = 8;
-                    money = money - 250;
-                    cout << " " << endl;
-                    cout << "No one escapes your sights; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break;
-                }else if (weaponchoice == 'I' && money >= 400) {
-                    weapon = "Brass Knuckles, +9 DMG";
-                    moddmg = 9;
-                    money = money - 400;
-                    cout << " " << endl;
-                    cout << "You're ready to brawl; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break;
-                }else if (weaponchoice == 'J' && money >= 600) {
-                    weapon = "Spiked Bat, +10 DMG";
-                    moddmg = 10;
-                    money = money - 600;
-                    cout << " " << endl;
-                    cout << "You feel the ethereal magic pulse from this ancient relic; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break;
-                }else if (weaponchoice == 'K'){
-                    break;
-                }else {
-                    cout << "MR HUTCHINSON: Sorry pal, looks like you don't have enough to buy that." << endl;
-                }
-            }else if (shopchoice == 'B') {
-                commoncashout = commonfish * 2;
-                    rarecashout = rarefish * 4;
-                    epiccashout = epicfish * 7;
-                    legendarycashout = legendaryfish * 10;
-                    totalcashout = commoncashout + rarecashout + epiccashout + legendarycashout;
-                cout << " " << endl;
-                cout << "A) Common Rod............+1 Luck.....$5" << endl;
-                cout << "B) Sturdy Rod............+2 Luck.....$20" << endl;
-                cout << "C) Premium Rod...........+3 Luck.....$50" << endl;
-                cout << "D) Deep Sea Rod..........+4 Luck.....$100" << endl;
-                cout << "E) Jody Barrs Rod........+5 Luck.....$250" << endl;
-                cout << "F) Sell your fish...................+$" << totalcashout << endl;
-                cout << "G) Goodbye" << endl;
-                cout << "" << endl;
-                cout << "You currently have:" << endl;
-                cout << fish << endl;
-                
-                cin >> rodchoice;
-                if (rodchoice == "A" && money >= 5) {
-                    fishingrod = "Common Rod: +1 Luck";
-                    modluck = 1;
-                    money = money - 5;
-                    cout << " " << endl;
-                    cout << "You're ready to hit the ponds, now; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break; 
-                }else if (rodchoice == "B" && money >= 20) {
-                    fishingrod = "Sturdy Rod: +2 Luck";
-                    modluck = 2;
-                    money = money - 20;
-                    cout << " " << endl;
-                    cout << "A classic rod for a classic guy; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break; 
-                }else if (rodchoice == "C" && money >= 50) {
-                    fishingrod = "Premium Rod: +3 Luck";
-                    modluck = 3;
-                    money = money - 50;
-                    cout << " " << endl;
-                    cout << "The nicest rod east of the Mississippi; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break; 
-                }else if (rodchoice == "D" && money >= 100) {
-                    fishingrod = "Deep Sea Rod: +2 Luck";
-                    modluck = 4;
-                    money = money - 100;
-                    cout << " " << endl;
-                    cout << "Not sure what this is doing here, but its very strong; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break; 
-                }else if (rodchoice == "E" && money >= 250) {
-                    fishingrod = "Jody Barrs Rod: +2 Luck";
-                    modluck = 5;
-                    money = money - 250;
-                    cout << " " << endl;
-                    cout << "The very rod used by fisherman legend 'Jody Barr'; successfully purchased." << endl;
-                    cout << " " << endl;
-                    break; 
-                }else if (rodchoice == "F") {
-                    fish = "";
-                    cout << " " << endl;
-                    cout << "MR. HUTCHINSON: Nice work! You made $" << totalcashout << " for this sale!" << endl;
-                    money = money + totalcashout;
-                    break; 
-                }else if (rodchoice == "G"){
-                    break;
-                }else {
-                    cout << "MR HUTCHINSON: Sorry pal, looks like you don't have enough to buy that." << endl;
-                    cout << " " << endl;
-                }
-            }else if (shopchoice == 'C') {
-                cout << "ARMOR AND PROTECTION: " << endl;
-                cout << "A) Medkit....................Restore 2HP.......$10" << endl;
-                cout << "B) Nurse Aimees Power Kit....Restore full HP...$30" << endl;
-                cout << "C) Ollies Leather Coat......+1 Max HP.........$50" << endl;
-                cout << "D) Tactical Kerpants........+2 Max HP.........$100" << endl;
-                cout << "E) Clemuratan Helmet........+3 Max HP.........$150" << endl;
-                cout << "F) Goodbye" << endl;
-                cout << " " << endl;
-                
-                cin >> armorchoice;
-                if (armorchoice == 'A' && money >= 10) {
-                    if (max_health - health == 1) {
-                        health = health + 1;
-                        money = money - 10; 
-                        cout << "Feeling fresh already; successfully purchased." << endl;
-                        break;
-                    }else if (max_health - health == 0) {
-                        cout << "You're already at max health!" << endl;
-                    }else {
-                        cout << "Feeling fresh already; successfully purchased." << endl;
-                        money = money - 10;
-                        health = health + 2;
-                        break;
-                    }
-                }else if (armorchoice == 'B' && money >= 30){
-                    health = max_health;
-                    money = money - 30;
-                    cout << "Good as new! Thanks, Aimee; successfully purchased." << endl;
-                    break;
-                }else if (armorchoice == 'C' && money >= 50){
-                    max_health = max_health + 1;
-                    health = health + 1;
-                    money = money - 50;
-                    cout << "The beaten coat of an old friend; successfully purchased." << endl;
-                    armor = armor + "Ollies Leather Coat, ";
-                    break;
-                }else if (armorchoice == 'D' && money >= 100){
-                    max_health = max_health + 2;
-                    health = health + 2;
-                    money = money - 100;
-                    cout << "Made from the finest kerleather; successfully purchased." << endl;
-                    armor = armor + "Tactical Kerpants, ";
-                    break;
-                }else if (armorchoice == 'E' && money >= 150) {
-                    max_health = max_health + 3;
-                    health = health + 3;
-                    money = money - 150;
-                    cout << "A land only heard of the folklore of Ancient Medieval: Honors; successfully purchased" << endl;
-                    armor = armor + "Clemuratan Helmet, ";
-                    break;
-                }else if (armorchoice = 'F') {
-                    break;
-                }else {
-                    cout << "MR HUTCHINSON: Sorry pal, you dont have enough money to purchase that." << endl;
-                }
-            }else if (shopchoice == 'D') {
-                cout << "CRAFTABLE ITEMS: " << endl;
-                cout << "A) Knife................$2, 5 wood, 4 stone" << endl;
-                cout << "B) Machete..............$5, 6 wood, 10 stone" << endl;
-                cout << "C) Pistol...............$10, 8 wood, 5 stone, 5 machine parts" << endl;
-                cout << "D) SMG..................$20, 7 wood, 10 stone, 10 machine parts" << endl;
-                cout << "E) Shotgun..............$80, 10 wood, 15 stone, 20 machine parts" << endl;
-                cout << "F) Goodbye" << endl;
-                cin >> craftchoice;
-                
-                    if (craftchoice == 'A' && money >= 2 && wood >= 5 && stone >= 4 ){
-                        weapon = "Knife";
-                        moddmg = 1;
-                        money = money - 2;
-                        wood = wood - 5;
-                        stone = stone - 4;
-                        break;
-                    }else if (craftchoice == 'B' && money >= 5 && wood >= 6 && stone >= 10 ){
-                        weapon = "Machete";
-                        moddmg = 2;
-                        money = money - 5;
-                        wood = wood - 6;
-                        stone = stone - 10;
-                        break;
-                    }else if (craftchoice == 'C' && money >= 10 && wood >= 8 && stone >= 5 && machineparts >= 5){
-                        weapon = "Pistol";
-                        moddmg = 3;
-                        money = money - 10;
-                        wood = wood - 8;
-                        stone = stone - 5;
-                        machineparts = machineparts - 5;
-                        break;
-                    }else if (craftchoice == 'D' && money >= 20 && wood >= 7 && stone >= 10 && machineparts >= 10 ){
-                        weapon = "SMG";
-                        moddmg = 4;
-                        money = money - 20;
-                        wood = wood - 7;
-                        stone = stone - 10;
-                        machineparts = machineparts - 10;
-                        break;
-                    }else if (craftchoice == 'E' && money >= 80 && wood >= 10 && stone >= 15 && machineparts >= 20){
-                        weapon = "Shotgun";
-                        moddmg = 5;
-                        money = money - 80;
-                        wood = wood - 10;
-                        stone = stone - 15;
-                        machineparts = machineparts - 20;
-                        break;
-                    }else if (craftchoice = 'F'){
-                        break;
-                    }else {
-                        cout << "MR. HUTCHINSON: Seems like you don't have enough resources to make that one." << endl;
-                    }
-            }else if (shopchoice == 'E'){
-                while (true) {
-                cout << " " << endl;
-                cout << "SAGE SNACK SHACK: " << endl;
-                cout << "A) Sage Cookies...........2 Hunger...$6" << endl;
-                cout << "B) Mrs Sierras Pasta......4 Hunger...$11" << endl;
-                cout << "C) Chicky-fi-laa..........8 Hunger...$20" << endl;
-                cout << "D) Missys Cookbook........Lessens chance of foraging poisonous food...$50" << endl;
-                cout << "E) Goodbye" << endl;
-                
-                cin >> foodchoice;
-                
-                if (foodchoice == 'A' && money >= 8) {
-                    cout << "Soft and gooey perfection; successfully purchased." << endl;
-                    money = money - 8;
-                    hunger = hunger + 2;
-                    break;
-                }else if (foodchoice == 'B' && money >= 14) {
-                    cout << "Classic homecooked pasta; successfully purchased." << endl;
-                    money = money - 11;
-                    hunger = hunger + 4;
-                    break;
-                }else if (foodchoice == 'C' && money >= 20) {
-                    cout << "Tastes like a bus ride home from a robotics comp; successfully purchased" << endl;
-                    money = money - 20;
-                    hunger = hunger + 6;
-                    break;
-                }else if (foodchoice == 'D' && money >= 50){
-                    cout << "Aint no cooking like southern cooking." << endl;
-                    cookbook = 1;
-                    break;
-                }else if (foodchoice == 'E') {
-                    break;
-                }else {
-                cout << "MR HUTCHINSON: Sorry, pal. Looks like you don't have enough to purchase that." << endl;
-                }
-            }
-            
-            
-            }else {
-                cout << "MR HUTCHINSON: Thanks for checking out my shop!" << endl;
-                break;
-            }
-        }
-        
-        
-        
-    }else if (choice == 'E' && location == 4){
-        cout << "The fire reminds you of home. " << endl;
-    }
-    
-    } //while loop bracket
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    return 0;
-}
+# Crafting per C++ update: (name, wood, stone, parts, weapon_mod or None, isBoat)
+CRAFT = [
+    ("Knife",       2,  3,  0, 1, False),
+    ("Machete",     3,  7,  0, 2, False),
+    ("Pistol",      5, 10, 10, 4, False),
+    ("SMG",        10, 15, 15, 6, False),
+    ("Shotgun",    15, 20, 20, 7, False),
+    ("Boat",       75, 50, 20, None, True),
+]
+
+# ----------------------------
+# Player
+# ----------------------------
+class Player:
+    def __init__(self):
+        # Core stats
+        self.max_health = 8
+        self.health = 8
+        self.hunger = 10
+
+        # Stat system (split into base + gear mods)
+        self.base_luck = 0
+        self.rod_luck = 0      # from rod
+        self.base_damage = 1
+        self.weapon_mod = 0    # from weapon
+
+        # Economy & resources
+        self.money = 10
+        self.wood = 0
+        self.stone = 0
+        self.machineparts = 0
+
+        # Gear / Inventory
+        self.fishingrod = "Stick And String"
+        self.weapon = "Fists"
+        self.armor_items = []
+        self.fish_list = []  # list of fish names
+        self.fish_counts = {"common": 0, "rare": 0, "epic": 0, "legendary": 0}
+
+        # Flags
+        self.cookbook = False
+        self.name = ""
+        self.location = "Forest"
+        self.turns = 0
+        self.hasboat = False
+
+    @property
+    def total_luck(self):
+        return self.base_luck + self.rod_luck
+
+    @property
+    def total_damage(self):
+        return self.base_damage + self.weapon_mod
+
+    def stats(self):
+        print(f"\nNAME: {self.name}")
+        print(f"HEALTH: {self.health}/{self.max_health}")
+        print(f"DAMAGE: {self.total_damage} (base {self.base_damage} + weapon {self.weapon_mod})")
+        print(f"LUCK: {self.total_luck} (base {self.base_luck} + rod {self.rod_luck})")
+        print(f"HUNGER: {self.hunger}")
+        print(f"MONEY: {self.money}")
+        print(f"WOOD: {self.wood}")
+        print(f"STONE: {self.stone}")
+        print(f"MACHINE PARTS: {self.machineparts}")
+        print(f"FISHING ROD: {self.fishingrod}")
+        print(f"WEAPON: {self.weapon}")
+        print(f"ARMOR: {', '.join(self.armor_items) if self.armor_items else 'None'}")
+        print(f"FISH: {', '.join(self.fish_list) if self.fish_list else 'None'}\n")
+
+    def update_stats(self):
+        self.hunger = min(self.hunger, 10)
+        self.health = min(self.health, self.max_health)
+        if self.hunger < 0:
+            self.hunger = 0
+            self.health -= 1
+            slow_print("You are starving! -1 HP")
+
+# ----------------------------
+# Character creation
+# ----------------------------
+def character_creation(player: Player):
+    slow_print("\nWelcome to Zombie Pro Fisher - Byte Sized!")
+    time.sleep(1)
+    slow_print("\n--- Character Customization ---\n")
+
+    eye = choose("Choose eye color:", {
+        "1": "Blue (+2 luck)",
+        "2": "Brown (+1 damage)",
+        "3": "Green (+2 max health)"
+    })
+    if eye == "1": player.base_luck += 2
+    elif eye == "2": player.base_damage += 1
+    elif eye == "3": player.max_health += 2
+
+    hair = choose("Choose hair color:", {
+        "1": "Blonde (+2 luck)",
+        "2": "Brown (+1 damage)",
+        "3": "Black (+2 max health)"
+    })
+    if hair == "1": player.base_luck += 2
+    elif hair == "2": player.base_damage += 1
+    elif hair == "3": player.max_health += 2
+
+    size = choose("Choose size:", {
+        "1": "Short (+2 luck)",
+        "2": "Tall (+1 damage)",
+        "3": "Medium (+2 max health)"
+    })
+    if size == "1": player.base_luck += 2
+    elif size == "2": player.base_damage += 1
+    elif size == "3": player.max_health += 2
+
+    player.name = input("Now, what is your hero's name? ")
+    player.health = player.max_health
+
+    slow_print("\nStarting your journey now! Here are your stats:")
+    player.stats()
+
+    player.location = random.choice(LOCATIONS)
+    slow_print("\nSPAWNING CHARACTER...")
+    time.sleep(2)
+    slow_print(f"You arrive at the {player.location.upper()}.")
+
+# ----------------------------
+# Encounters / Actions
+# ----------------------------
+def zombie_encounter(player: Player):
+    if player.location == "Shack":
+        return False
+
+    spawn_roll = random.randint(0, 10)
+    risky = (spawn_roll >= 9 and player.location != "Shack") or (spawn_roll >= 6 and player.location == "Nuclear Plant")
+    if not risky:
+        return False
+
+    zombie_hp = random.randint(5, 15)
+    slow_print("\nZOMBIE ENCOUNTER!")
+    while zombie_hp > 0 and player.health > 0:
+        print(f"Zombie HP: {zombie_hp} | Your HP: {player.health}")
+        action = choose("What do you do?", {"1": "Attack", "2": "Run away"})
+        if action == "1":
+            dmg = random.randint(0, 4) + player.total_damage
+            slow_print(f"You hit the zombie for {dmg}!")
+            zombie_hp -= dmg
+            if zombie_hp <= 0:
+                reward = random.randint(1, 15)
+                slow_print(f"You killed the zombie! You got ${reward}.")
+                player.money += reward
+                break
+            z_dmg = random.randint(0, 8)
+            slow_print(f"The zombie hits you for {z_dmg}!")
+            player.health -= z_dmg
+        else:
+            escape = random.randint(0, 20) + int(player.total_luck * 1.5)
+            if escape >= 12:
+                slow_print("You successfully got away!")
+                break
+            else:
+                slow_print("The zombie caught up to you!")
+                z_dmg = random.randint(0, 5)
+                slow_print(f"The zombie hits you for {z_dmg}!")
+                player.health -= z_dmg
+
+    if player.health <= 0:
+        weeks = player.turns // 7
+        days = player.turns % 7
+        slow_print(f"\nYOU DIED\nYou lasted {weeks} week(s) and {days} day(s). ({player.turns} turns). Not bad!")
+        return True
+    return False
+
+def forage(player: Player):
+    if player.location == "Nuclear Plant":
+        slow_print("You're not sure there's anything safe to eat here...")
+        # Stranger (Hudson) encounter (as per C++ flow)
+        if random.randint(0, 10) == 5:
+            slow_print("\nYou search through the maze of Seqouyah Power Plant.")
+            slow_print("Upon approaching a janitor's closet, you hear someone.")
+            slow_print("You carefully open the door. To your surprise, it's a man in withered clothes.")
+            slow_print("His eyes are bloodshot and his hair grows in patches. He shivers and stares you in the eyes.")
+
+            c1 = choose("STRANGER: A-Are you here... for... for me...?", {
+                "1": "Who are you?",
+                "2": "What are you doing here?",
+                "3": "Kill it."
+            })
+            if c1 == "3":
+                slow_print("Without a second thought you put an end to the hoodlum's life. +$10")
+                player.money += 10
+                return
+            if c1 == "1":
+                slow_print("STRANGER: Ker... ker something... Kerhuddy? Krudson? It's been... so long. I was looking for the code!")
+            else:
+                slow_print("STRANGER: I came after the meltdown. It's all gone. The code. The numbers. They were supposed to be here!")
+
+            c2 = choose("What do you do?", {
+                "1": "Code?",
+                "2": "So where is it?",
+                "3": "Kill him."
+            })
+            if c2 == "3":
+                slow_print("Without a second thought you put an end to the hoodlum's life. +$10")
+                player.money += 10
+                return
+            if c2 == "1":
+                slow_print("STRANGER: Hahaha! The code! But, of course, you can't see it. You're not awakened!")
+            else:
+                slow_print("STRANGER: Hahaha! You think you're worthy of finding it? The eyes of the unawakened will NEVER find it! NEVER!")
+
+            c3 = choose("What do you do?", {
+                "1": "How do I become... awakened?",
+                "2": "Good luck on your search.",
+                "3": "Enough of this. Kill him."
+            })
+            if c3 == "3":
+                slow_print("Without a second thought you put an end to the hoodlum's life. +$10")
+                player.money += 10
+                return
+            if c3 == "2":
+                slow_print("STRANGER: I-Its here... somewhere! The code! Hahaha!")
+                return
+
+            # Milk / Sugar
+            final_choice = choose("Choose:", {"1": "The milk.", "2": "The sugar."})
+            if final_choice == "1":
+                slow_print("You choke down a vial of solid white liquid. Your vision blurs... you feel... awakened.")
+                slow_print("Luck +5, Damage +2")
+                player.base_luck += 5
+                player.base_damage += 2
+            else:
+                slow_print("You sniff a bag of harsh white powder. Your eyes burn... yet you feel... awakened.")
+                slow_print("Luck +2, Damage +5")
+                player.base_luck += 2
+                player.base_damage += 5
+        return
+
+    if player.location == "Shack":
+        slow_print("Mr. Hutchinson tells you to stop snooping around in his shop.")
+        return
+
+    # Normal forage (C++ thresholds w/ cookbook effect)
+    player.hunger -= 1
+    result = random.randint(-10, 32) + int(player.total_luck * 1.8)
+    if result <= 0:
+        slow_print("You found nothing.")
+    elif (1 <= result <= 10 and not player.cookbook) or (0 <= result <= 5 and player.cookbook):
+        hp_loss = random.randint(1, 3)
+        player.health -= hp_loss
+        slow_print(f"Yuck! You ate something you shouldn't have. -{hp_loss} HP.")
+    elif (11 <= result <= 20 and not player.cookbook) or (6 <= result <= 20 and player.cookbook):
+        slow_print("You found some nuts and berries. +2 Hunger")
+        player.hunger += 2
+    elif 21 <= result <= 25:
+        slow_print("You're not sure what you found, but the geiger counter didn't beep. +3 Hunger.")
+        player.hunger += 3
+    elif 26 <= result <= 30:
+        slow_print("You trapped some local fauna and ate a well-cooked meal. +4 Hunger.")
+        player.hunger += 4
+    elif 31 <= result <= 40:
+        slow_print("You found unexpired canned food. +5 Hunger.")
+        player.hunger += 5
+
+def fishing(player: Player):
+    # C++-style fishing: 0..95 + total_luck*2.5
+    player.hunger -= 1
+    roll = random.randint(0, 95) + int(player.total_luck * 2.5)
+
+    if roll <= 40:
+        slow_print("You didn't catch any fish today...")
+        return
+    elif 41 <= roll <= 70:
+        category = "common"
+    elif 71 <= roll <= 85:
+        category = "rare"
+    elif 86 <= roll <= 95:
+        category = "epic"
+    else:  # >=96
+        category = "legendary"
+
+    species = random.choice(FISH_POOLS[category])
+    slow_print(f"You caught a {species}!")
+    player.fish_list.append(species)
+    player.fish_counts[category] += 1
+
+def gather(player: Player, resource: str):
+    amount = random.randint(0, 5)
+    slow_print(f"You gathered {amount} pieces of {resource}.")
+    if resource == "wood":
+        player.wood += amount
+    elif resource == "stone":
+        player.stone += amount
+    elif resource == "machinery":
+        player.machineparts += amount
+    player.hunger -= 1
+
+# ----------------------------
+# Shop (overhauled)
+# ----------------------------
+def shop(player: Player):
+    hutchinson_dialogues = [
+        "It's good to see a friendly face. Here's my shop.",
+        "Welcome back, old timer!",
+        f"Hittin' the lakes already, are we {player.name}?",
+        f"Ahh, {player.name}, glad to see you're safe and well!",
+        "My tackle is the best in town! Glad the youngins are getting into the spirit of fishing!"
+    ]
+    slow_print(f"Mr Hutchinson greets you with a warm nod and a gruffy smile. {random.choice(hutchinson_dialogues)}")
+
+    while True:
+        action = choose("What would you like to do?", {
+            "1": "Buy weapons",
+            "2": "Buy/sell fishing goods",
+            "3": "Armor Shop",
+            "4": "Craft",
+            "5": "Sage Snack Shack",
+            "6": "Goodbye"
+        })
+
+        # Weapons
+        if action == "1":
+            slow_print("WEAPON SHOP:")
+            for idx, (name, mod, cost) in enumerate(WEAPONS, start=1):
+                slow_print(f"[{idx}] {name:<22} +{mod} DMG  - ${cost}")
+            slow_print(f"[0] Go Back")
+            choice = input("> ").strip()
+            if choice == "0":
+                continue
+            try:
+                i = int(choice) - 1
+                name, mod, cost = WEAPONS[i]
+            except:
+                slow_print("Invalid choice.")
+                continue
+            if player.money >= cost:
+                player.weapon = name
+                player.weapon_mod = mod
+                player.money -= cost
+                slow_print(f"You bought {player.weapon}! (Weapon mod +{mod})")
+            else:
+                slow_print("Not enough money.")
+
+        # Fishing goods
+        elif action == "2":
+            # compute cashout
+            cc = player.fish_counts
+            total_cash = (
+                cc["common"] * SELL_VALUES["common"] +
+                cc["rare"] * SELL_VALUES["rare"] +
+                cc["epic"] * SELL_VALUES["epic"] +
+                cc["legendary"] * SELL_VALUES["legendary"]
+            )
+            slow_print("FISHING GOODS:")
+            for idx, (name, rluck, cost) in enumerate(RODS, start=1):
+                slow_print(f"[{idx}] {name:<18} +{rluck} Luck - ${cost}")
+            slow_print(f"[s] Sell your fish (+${total_cash})")
+            slow_print("[0] Goodbye")
+            slow_print(f"You currently have: {', '.join(player.fish_list) if player.fish_list else 'None'}")
+
+            choice = input("> ").strip().lower()
+            if choice == "0":
+                continue
+            elif choice == "s":
+                if player.fish_list:
+                    player.money += total_cash
+                    slow_print(f"MR. HUTCHINSON: Nice work! You made ${total_cash} for this sale!")
+                    player.fish_list.clear()
+                    for k in player.fish_counts:
+                        player.fish_counts[k] = 0
+                else:
+                    slow_print("You have no fish to sell.")
+            else:
+                try:
+                    i = int(choice) - 1
+                    name, rluck, cost = RODS[i]
+                except:
+                    slow_print("Invalid choice.")
+                    continue
+                if player.money >= cost:
+                    player.fishingrod = name
+                    player.rod_luck = rluck
+                    player.money -= cost
+                    slow_print(f"You bought {player.fishingrod}! (Rod luck +{rluck})")
+                else:
+                    slow_print("Not enough money.")
+
+        # Armor
+        elif action == "3":
+            slow_print("ARMOR AND PROTECTION:")
+            for idx, (name, typ, value, cost) in enumerate(ARMOR, start=1):
+                if typ == "heal": desc = f"Restore {value} HP"
+                elif typ == "fullheal": desc = "Restore full HP"
+                else: desc = f"+{value} Max HP"
+                slow_print(f"[{idx}] {name:<25} {desc:<18} - ${cost}")
+            slow_print("[0] Goodbye")
+
+            choice = input("> ").strip()
+            if choice == "0":
+                continue
+            try:
+                i = int(choice) - 1
+                name, typ, val, cost = ARMOR[i]
+            except:
+                slow_print("Invalid choice.")
+                continue
+            if player.money < cost:
+                slow_print("Not enough money.")
+                continue
+
+            if typ == "heal":
+                player.health = min(player.health + val, player.max_health)
+            elif typ == "fullheal":
+                player.health = player.max_health
+            elif typ == "maxhp":
+                player.max_health += val
+                player.health += val
+                player.armor_items.append(name)
+            player.money -= cost
+            slow_print(f"You bought {name}!")
+
+        # Craft (C++ costs)
+        elif action == "4":
+            slow_print("CRAFTABLE ITEMS:")
+            for idx, (name, w, s, p, mod, isBoat) in enumerate(CRAFT, start=1):
+                if isBoat:
+                    slow_print(f"[{idx}] {name:<10} {w} wood, {s} stone, {p} machine parts")
+                else:
+                    slow_print(f"[{idx}] {name:<10} {w} wood, {s} stone, {p} machine parts  -> +{mod} DMG")
+            slow_print("[0] Goodbye")
+            choice = input("> ").strip()
+            if choice == "0":
+                continue
+            try:
+                i = int(choice) - 1
+                name, w, s, p, mod, isBoat = CRAFT[i]
+            except:
+                slow_print("Invalid choice.")
+                continue
+
+            if player.wood >= w and player.stone >= s and player.machineparts >= p:
+                player.wood -= w
+                player.stone -= s
+                player.machineparts -= p
+                if isBoat:
+                    player.hasboat = True
+                    slow_print("Distant horizons draw near. You've crafted a boat!")
+                else:
+                    player.weapon = name
+                    player.weapon_mod = mod
+                    slow_print(f"You successfully crafted a {name}! (Weapon mod +{mod})")
+            else:
+                slow_print("Not enough resources to craft that.")
+
+        # Food
+        elif action == "5":
+            slow_print("SAGE SNACK SHACK:")
+            for idx, (name, val, cost) in enumerate(FOOD, start=1):
+                if name == "Missy's Cookbook":
+                    desc = "Lessens chance of foraging poisonous food"
+                    slow_print(f"[{idx}] {name:<22} {desc} - ${cost}")
+                else:
+                    slow_print(f"[{idx}] {name:<22} +{val} Hunger - ${cost}")
+            slow_print("[0] Goodbye")
+
+            choice = input("> ").strip()
+            if choice == "0":
+                continue
+            try:
+                i = int(choice) - 1
+                name, val, cost = FOOD[i]
+            except:
+                slow_print("Invalid choice.")
+                continue
+            if player.money < cost:
+                slow_print("Not enough money.")
+                continue
+            if name == "Missy's Cookbook":
+                player.cookbook = True
+            else:
+                player.hunger += val
+            player.money -= cost
+            slow_print(f"You bought {name}!")
+
+        else:
+            slow_print("MR HUTCHINSON: Thanks for checking out my shop!")
+            break
+
+# ----------------------------
+# Main loop
+# ----------------------------
+def main():
+    player = Player()
+    character_creation(player)
+
+    while player.health > 0:
+        player.turns += 1
+        player.update_stats()
+
+        if zombie_encounter(player):
+            break
+
+        print("\nWhat would you like to do?")
+        options = {"1": "Forage", "2": "Change location", "3": "Check stats"}
+
+        if player.location == "Forest":
+            options.update({"4": "Gather wood", "5": "Watch birds"})
+        elif player.location == "Lake":
+            options.update({"4": "Go fishing", "5": "Gather rocks"})
+            if player.hasboat:
+                options.update({"6": "Sail away..."})
+        elif player.location == "Nuclear Plant":
+            options.update({"4": "Gather machine parts", "5": "Listen to echoes"})
+        elif player.location == "Shack":
+            options.update({"4": "Interact with Mr. Hutchinson", "5": "Rest by the fire"})
+
+        choice = choose("Choose an action:", options)
+
+        if choice == "1":
+            forage(player)
+
+        elif choice == "2":
+            locs = {"1": "Forest", "2": "Lake", "3": "Nuclear Plant", "4": "Shack"}
+            loc_choice = choose("Where would you like to go? Traveling is dangerous and takes time.", {
+                "1": "FOREST", "2": "LAKE", "3": "NUCLEAR PLANT", "4": "SHACK"
+            })
+            newloc = locs[loc_choice]
+            if newloc == player.location:
+                slow_print("You can't travel to a place you're already at.")
+            else:
+                player.location = newloc
+                slow_print(f"You travel to the {player.location}.")
+
+        elif choice == "3":
+            player.stats()
+
+        elif choice == "4":
+            if player.location == "Forest":
+                gather(player, "wood")
+            elif player.location == "Lake":
+                fishing(player)
+            elif player.location == "Nuclear Plant":
+                gather(player, "machinery")
+            elif player.location == "Shack":
+                shop(player)
+
+        elif choice == "5":
+            if player.location == "Forest":
+                event = random.randint(1, 4)
+                if event == 1:
+                    slow_print("The birds are lively today. +1 HP.")
+                    player.health = min(player.health + 1, player.max_health)
+                elif event == 2:
+                    slow_print("There are only a few birds today. You find peace in solitude.")
+                elif event == 3:
+                    slow_print("No birds today. It's quiet and eerie. -1 Damage.")
+                    player.base_damage = max(1, player.base_damage - 1)
+                elif event == 4:
+                    slow_print("You see large birds. +1 luck, -1 Hunger.")
+                    player.base_luck += 1
+                    player.hunger -= 1
+
+            elif player.location == "Lake":
+                gather(player, "stone")
+
+            elif player.location == "Nuclear Plant":
+                event = random.randint(1, 4)
+                if event == 1:
+                    slow_print("You hear the humming of a machine. It gives you hope. +1 HP.")
+                    player.health = min(player.health + 1, player.max_health)
+                elif event == 2:
+                    slow_print("You hear water dripping in the dark corridors.")
+                elif event == 3:
+                    slow_print("You hear zombie screeches in the distant maze. It scares you.")
+                    player.base_damage = max(1, player.base_damage - 1)
+                elif event == 4:
+                    slow_print("You hear metal drop in the distance. It's your lucky day. +$1.")
+                    player.money += 1
+
+            elif player.location == "Shack":
+                slow_print("The fire reminds you of home.")
+
+        elif choice == "6" and player.location == "Lake" and player.hasboat:
+            slow_print("After weeks of survival...")
+            b1 = choose("A) Board the boat...\nB) No -- your work here isn't finished.",
+                        {"a": "Board the boat", "b": "Stay"})
+            if b1 == "a":
+                slow_print("...And many zombies slain...")
+                b2 = choose("A) ...And set sail...\nB) No -- your work here isn't finished.",
+                            {"a": "Set sail", "b": "Stay"})
+                if b2 == "a":
+                    slow_print("... You finally embark. As the ruins of Seqouyah fade into the distance and the calm wake splashes your hull, anywhere is better than here.")
+                    weeks = player.turns // 7
+                    days = player.turns % 7
+                    slow_print(f"You escaped after surviving for {weeks} week(s) and {days} day(s). ({player.turns} turns). Congratulations!!")
+                    return
+
+    slow_print("\nGame Over. Thanks for playing!")
+
+if __name__ == "__main__":
+    main()
