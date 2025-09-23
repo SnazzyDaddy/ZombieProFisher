@@ -1,5 +1,1 @@
-Zombie Pro Fisher was a gag game that was conceptualized by my friend and I. It started at our friends birthday party, on a boat in a lake that was just adjacent to the Sequoyah Nuclear Powerplant in Chattanooga Tennessee.
-Joking for years about turning it into a real game, I took it upon myself to make the first iteration - this text-based adventure/survival game made with C++. While its riddled with inside jokes that only me and my friends might understand,
-the game is appropriate and fun for anyone who might want to play it.
-
-Make sure your letters are capitalized when inputting your selection.
+Zombie Pro Fisher is an adventure survival game that takes place in the waters around Sequoyah Nuclear Power Plant in Tennessee. Battle zombies for rewards, fish to survive in a post-meltdown society, and explore unique locations. Will you be able to build a boat to sail away? Or will you become lunch?
