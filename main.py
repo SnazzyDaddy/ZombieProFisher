@@ -55,41 +55,41 @@ FISH_POOLS = {
 
 # Weapon shop (name, weapon_mod_damage, cost)
 WEAPONS = [
-    ("Knife", 1, 5),
-    ("Machete", 2, 10),
-    ("Axe", 3, 20),
-    ("Pistol", 4, 40),
-    ("SMG", 5, 80),
-    ("Shotgun", 6, 100),
-    ("AR-15", 7, 160),
-    ("Sniper", 8, 200),
-    ("Brass Knuckles", 9, 250),
-    ("Spiked Bat", 10, 400),
+    ("Knife", 1, 5, False),
+    ("Machete", 2, 10, False),
+    ("Axe", 3, 20, False),
+    ("Pistol", 4, 40, False),
+    ("SMG", 5, 80, False),
+    ("Shotgun", 6, 100, False),
+    ("AR-15", 7, 160, False),
+    ("Sniper", 8, 200, False),
+    ("Brass Knuckles", 9, 250, False),
+    ("Spiked Bat", 10, 400, False),
 ]
 
 # Rod shop (name, rod_luck, cost)
 RODS = [
-    ("Common Rod", 1, 5),
-    ("Sturdy Rod", 2, 20),
-    ("Premium Rod", 3, 50),
-    ("Deep Sea Rod", 4, 100),
-    ("Jody Barrs Rod", 5, 250),
+    ("Common Rod", 1, 5, False),
+    ("Sturdy Rod", 2, 20, False),
+    ("Premium Rod", 3, 50, False),
+    ("Deep Sea Rod", 4, 100, False),
+    ("Jody Barrs Rod", 5, 250, True),
 ]
 
 # Armor / consumables (name, type, value, cost)
 ARMOR = [
-    ("Medkit", "heal", 2, 5),
-    ("Nurse Aimees Power Kit", "fullheal", 0, 25),
-    ("Ollies Leather Coat", "maxhp", 1, 50),
-    ("Tactical Kerpants", "maxhp", 2, 100),
-    ("Clemuratan Helmet", "maxhp", 3, 150),
+    ("Medkit", "heal", 2, 5, False),
+    ("Nurse Aimees Power Kit", "fullheal", 0, 25, False),
+    ("Ollies Leather Coat", "maxhp", 1, 50, True),
+    ("Tactical Kerpants", "maxhp", 2, 100, False),
+    ("Clemuratan Helmet", "maxhp", 3, 150, False),
 ]
 
 FOOD = [
-    ("Sage Cookies", 2, 6),
-    ("Mrs Sierras Pasta", 4, 10),
-    ("Chicky-fi-laa", 6, 16),
-    ("Missy's Cookbook", "cookbook", 50),  # sets cookbook flag
+    ("Sage Cookies", 2, 6, False),
+    ("Mrs Sierras Pasta", 4, 10, False),
+    ("Chicky-fi-laa", 6, 16, False),
+    ("Missy's Cookbook", "cookbook", 50, True),  # sets cookbook flag
 ]
 
 # Sell values per category
