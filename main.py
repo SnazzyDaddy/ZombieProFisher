@@ -116,9 +116,29 @@ CRAFT = [
 class Player:
     def __init__(self):
         # Core stats
-        self.max_health = 8
-        self.health = 8
+        self.max_health = 10
+        self.health = 10
         self.hunger = 10
+        self.xp = 0
+
+        # Attributes (max 10 each)
+        self.grit = 0   #  +1.5 dodge per point
+        self.muscle = 0  # +0.5 base damage per point
+        self.nature = 0  # +0.5 foraging luck per point
+        self.brains = 0  # +1.5% xp gain per point
+        self.charm = 0  # +1.5% more money from fish sale per point
+
+        # Class bonuses (only one can be true)
+        self.is_scavenger = False #  +15% foraging luck
+        self.is_angler    = False #  +10% fishing luck
+        self.is_mechanic  = False #  -25% crafting resource costs
+        self.is_hunter    = False #  +10% combat damage
+        self.is_medic     = False #  Gauze heals 2–4 HP
+        self.is_trader    = False #  +10% money from all sources
+        self.is_brawler   = False #  +15 dodge chance
+        self.is_farmer    = False #  +2 Hunger restored from foraging
+        self.is_captain   = False #  +3 Skill points
+        self.is_scientist = False #  +10% XP gain
 
         # Stat system (split into base + gear mods)
         self.base_luck = 0
@@ -133,6 +153,7 @@ class Player:
         self.wood = 0
         self.stone = 0
         self.machineparts = 0
+        self.xp_until_level = 10
 
         # Gear / Inventory
         self.fishingrod = "Stick And String"
@@ -159,6 +180,10 @@ class Player:
     @property
     def total_dodge(self):
         return self.dodge + self.dodge_mod
+    
+    def statscore(self):
+        print(f"\n{self.name}: HP {self.health}/{self.max_health} || HUNGER: {self.hunger} || XP: {self.xp}/{self.xp_until_level}")
+        print("____________________________________________")
 
     def stats(self):
         print(f"\nNAME: {self.name}")
@@ -166,6 +191,16 @@ class Player:
         print(f"DAMAGE: {self.total_damage} (base {self.base_damage} + weapon {self.weapon_mod})")
         print(f"LUCK: {self.total_luck} (base {self.base_luck} + rod {self.rod_luck})")
         print(f"HUNGER: {self.hunger}")
+        print(f"XP: {self.xp}/{self.xp_until_level}")
+        print(f"DODGE: {self.total_dodge} (base {self.dodge} + armor {self.dodge_mod})")
+        print("\n--- ATTRIBUTES ---")
+        print(f"GRIT: {self.grit} (+{self.grit * 1.5} Dodge)")
+        print(f"MUSCLE: {self.muscle} (+{self.muscle * 0.5} Base Damage)")
+        print(f"NATURE: {self.nature} (+{self.nature * 0.5} Foraging Luck)")
+        print(f"BRAINS: {self.brains} (+{self.brains * 1.5}% XP Gain)")
+        print(f"CHARM: {self.charm} (+{self.charm * 1.5}% Money Gain)")
+
+    def inventory(self):
         print(f"MONEY: {self.money}")
         print(f"WOOD: {self.wood}")
         print(f"STONE: {self.stone}")
@@ -174,6 +209,24 @@ class Player:
         print(f"WEAPON: {self.weapon}")
         print(f"ARMOR: {', '.join(self.armor_items) if self.armor_items else 'None'}")
         print(f"FISH: {', '.join(self.fish_list) if self.fish_list else 'None'}\n")
+
+    def almanac(self):
+        print("\n--- FISH ALMANAC ---")
+        for category, species in FISH_POOLS.items():
+            print(f"\n{category.upper()} FISH:")
+            for fish in species:
+                caught = " (caught)" if fish in self.fish_list else ""
+                print(f" - {fish}{caught}")
+        print()
+        print("\n--- ZOMBIE ALMANAC ---")
+        for enemy in ENEMIES:
+            abilities = []
+            if enemy.is_buster: abilities.append("Explosive!")
+            if enemy.is_grappler: abilities.append("Will Grapple!")
+            ability_str = f" ({', '.join(abilities)})" if abilities else ""
+            print(f" - {enemy.name}{ability_str}: HP {enemy.hp_min}-{enemy.hp_max}, DMG {enemy.dmg_min}-{enemy.dmg_max}, Dodge Target {enemy.dodge_target}, Flee DC {enemy.flee_dc}")
+
+
 
     def update_stats(self):
         self.hunger = min(self.hunger, 10)
@@ -312,6 +365,10 @@ def character_creation(player: Player):
     time.sleep(1)
     slow_print("\n--- Character Customization ---\n")
 
+
+
+
+
     eye = choose("Choose eye color:", {
         "1": "Blue (+2 luck)",
         "2": "Brown (+1 damage)",
@@ -351,16 +408,8 @@ def character_creation(player: Player):
     slow_print(f"You arrive at the {player.location.upper()}.")
 
 # ----------------------------
-# Encounters / Actions
+# Encounters
 # ----------------------------
-
-
-#UNDER CONSTRUCTION
-#----------------------------------------------------------
-#---------------------------------------------------------
-#---------------------------------------------------------
-#---------------------------------------------------------
-
 
 def zombie_encounter(player):
     if player.location == "Shack":
@@ -379,9 +428,7 @@ def zombie_encounter(player):
     return False
 
 #----------------------------------------------------------
-#---------------------------------------------------------
-#---------------------------------------------------------
-#---------------------------------------------------------
+
 
 def forage(player: Player):
     if player.location == "Nuclear Plant":
@@ -475,9 +522,8 @@ def forage(player: Player):
         player.hunger += 5
 
 def fishing(player: Player):
-    # C++-style fishing: 0..95 + total_luck*2.5
     player.hunger -= 1
-    roll = random.randint(0, 95) + int(player.total_luck * 2.5)
+    roll = random.randint(0, 100) + int(player.total_luck * 2.5)
 
     if roll <= 40:
         slow_print("You didn't catch any fish today...")
@@ -512,13 +558,13 @@ def gather(player: Player, resource: str):
 # ----------------------------
 def shop(player: Player):
     hutchinson_dialogues = [
-        "/n HUTCHINSON: It's good to see a friendly face. Here's my shop.",
-        "/n HUTCHINSON: Welcome back, old timer!",
-        f"/n HUTCHINSON: Hittin' the lakes already, are we {player.name}?",
-        f"/n HUTCHINSON: Ahh, {player.name}, glad to see you're safe and well!",
-        "/n HUTCHINSON: My tackle is the best in town! Glad the youngins are getting into the spirit of fishing!"
-        "/n HUTCHINSON: I've been around these parts a long time. Seen a lot of things... some good, some bad."
-        "/n HUTCHINSON: No zombie apocalypse will stop me from hitting the lakes!"
+        "\n HUTCHINSON: It's good to see a friendly face. Here's my shop.",
+        "\n HUTCHINSON: Welcome back, old timer!",
+        f"\n HUTCHINSON: Hittin' the lakes already, are we {player.name}?",
+        f"\n HUTCHINSON: Ahh, {player.name}, glad to see you're safe and well!",
+        "\n HUTCHINSON: My tackle is the best in town! Glad the youngins are getting into the spirit of fishing!"
+        "\n HUTCHINSON: I've been around these parts a long time. Seen a lot of things... some good, some bad."
+        "\n HUTCHINSON: No zombie apocalypse will stop me from hitting the lakes!"
     ]
     slow_print(f"Mr Hutchinson greets you with a warm nod and a gruffy smile. {random.choice(hutchinson_dialogues)}")
 
@@ -633,7 +679,7 @@ def shop(player: Player):
             player.money -= cost
             slow_print(f"You bought {name}!")
 
-        # Craft (C++ costs)
+        # Crafting
         elif action == "4":
             slow_print("CRAFTABLE ITEMS:")
             for idx, (name, w, s, p, mod, isBoat) in enumerate(CRAFT, start=1):
@@ -703,6 +749,12 @@ def shop(player: Player):
 # ----------------------------
 # Main loop
 # ----------------------------
+# ----------------------------
+# Main loop
+# ----------------------------
+# ----------------------------
+# Main loop
+# ----------------------------
 def main():
     player = Player()
     character_creation(player)
@@ -714,8 +766,10 @@ def main():
         if zombie_encounter(player):
             break
 
+        player.statscore()
+
         print("\nWhat would you like to do?")
-        options = {"1": "Forage", "2": "Change location", "3": "Check stats"}
+        options = {"1": "Forage", "2": "Change location", "3": "Open Inventory"}
 
         if player.location == "Forest":
             options.update({"4": "Gather wood", "5": "Watch birds"})
@@ -745,8 +799,24 @@ def main():
                 player.location = newloc
                 slow_print(f"You travel to the {player.location}.")
 
+
         elif choice == "3":
-            player.stats()
+            while True:
+                inv_choice = choose("\n--- INVENTORY MENU ---", {
+                "1": "View Stats",
+                "2": "View Bag",
+                "3": "View Almanac",
+                "4": "Go Back"
+                })
+
+                if inv_choice == "1":
+                    player.stats()
+                elif inv_choice == "2":
+                    player.inventory()
+                elif inv_choice == "3":
+                    player.almanac()
+                elif inv_choice == "4":
+                    break
 
         elif choice == "4":
             if player.location == "Forest":
@@ -809,7 +879,11 @@ def main():
                     slow_print(f"You escaped after surviving for {weeks} week(s) and {days} day(s). ({player.turns} turns). Congratulations!!")
                     return
 
-    slow_print("\nGame Over. Thanks for playing!")
+
+    slow_print("\nGame Over. You survived for:")
+    slow_print(f"{weeks % 4} week(s), and {days % 7} day(s). ({player.turns} turns).")
+    slow_print("\nThanks for playing Zombie Pro Fisher - Byte Sized!")
+
 
 if __name__ == "__main__":
     main()
