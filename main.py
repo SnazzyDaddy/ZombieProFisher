@@ -362,7 +362,7 @@ def run_combat(player, enemy: EnemyType):
 # Character creation
 # ----------------------------
 def character_creation(player: Player):
-    slow_print("\nWelcome to Zombie Pro Fisher - Byte Sized!")
+    slow_print("Welcome to Zombie Pro Fisher - Byte Sized!")
     time.sleep(1)
     slow_print("\n--- Character Customization ---\n")
 
@@ -760,6 +760,7 @@ def shop(player: Player):
 # Main loop
 # ----------------------------
 def main():
+    clear_screen()
     player = Player()
     character_creation(player)
 
