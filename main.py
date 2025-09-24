@@ -36,7 +36,7 @@ def choose(prompt, options):
 # ----------------------------
 LOCATIONS = ["Forest", "Lake", "Nuclear Plant", "Shack"]
 
-# Fishing species pools by category (merged/extended from C++)
+# Fishing species pools by category
 FISH_POOLS = {
     "common": [
         "Catfish", "Smallmouth Bass", "Crappie", "Bluegill", "Sunfish"
@@ -92,7 +92,7 @@ FOOD = [
     ("Missy's Cookbook", "cookbook", 50),  # sets cookbook flag
 ]
 
-# Sell values per category (C++ update)
+# Sell values per category
 SELL_VALUES = {
     "common": 3,
     "rare": 5,
@@ -100,7 +100,7 @@ SELL_VALUES = {
     "legendary": 18,
 }
 
-# Crafting per C++ update: (name, wood, stone, parts, weapon_mod or None, isBoat)
+# Crafting (name, wood, stone, machine parts, weapon_mod or None, isBoat)
 CRAFT = [
     ("Knife",       2,  3,  0, 1, False),
     ("Machete",     3,  7,  0, 2, False),
@@ -125,6 +125,8 @@ class Player:
         self.rod_luck = 0      # from rod
         self.base_damage = 1
         self.weapon_mod = 0    # from weapon
+        self.dodge = 0
+        self.dodge_mod = 0     # from armor
 
         # Economy & resources
         self.money = 10
@@ -153,6 +155,10 @@ class Player:
     @property
     def total_damage(self):
         return self.base_damage + self.weapon_mod
+    
+    @property
+    def total_dodge(self):
+        return self.dodge + self.dodge_mod
 
     def stats(self):
         print(f"\nNAME: {self.name}")
@@ -176,6 +182,127 @@ class Player:
             self.hunger = 0
             self.health -= 1
             slow_print("You are starving! -1 HP")
+
+
+from dataclasses import dataclass
+import random
+
+@dataclass
+class EnemyType:
+    name: str
+    hp_min: int
+    hp_max: int
+    dmg_min: int
+    dmg_max: int
+    reward_min: int
+    reward_max: int
+    dodge_target: int   
+    flee_dc: int
+      # --- special abilities ---
+    is_buster: bool = False
+    is_grappler: bool = False
+
+ZOMBIE  = EnemyType(name="Zombie",  hp_min=5, hp_max=11, dmg_min=1, dmg_max=5, reward_min=1,  reward_max=5, dodge_target=60, flee_dc=12, is_grappler=False, is_buster=False)
+SCRAMBLER  = EnemyType(name="Scrambler",  hp_min=4, hp_max=9, dmg_min=2, dmg_max=6, reward_min=1,  reward_max=5, dodge_target=80, flee_dc=15, is_grappler=False, is_buster=False)
+BRUTE = EnemyType(name="Brute", hp_min=13, hp_max=21, dmg_min=5, dmg_max=9, reward_min=1,  reward_max=5, dodge_target=45, flee_dc=10, is_grappler=False, is_buster=False)
+BUSTER = EnemyType(name="Buster", hp_min=2, hp_max=5, dmg_min=6, dmg_max=17, reward_min=1,  reward_max=5, dodge_target=90, flee_dc=13, is_buster=True, is_grappler=False)
+CRAWLER = EnemyType(name="Crawler", hp_min=4, hp_max=8, dmg_min=2, dmg_max=4, reward_min=1,  reward_max=5, dodge_target=60, flee_dc=9, is_grappler=True, is_buster=False)
+
+ENEMIES = [ZOMBIE, SCRAMBLER, BRUTE, BUSTER, CRAWLER]
+ 
+def run_combat(player, enemy: EnemyType):
+    rng = random
+    zombie_hp = rng.randint(enemy.hp_min, enemy.hp_max)
+
+    combat_dodge = False   # +20 to THIS enemy attack if you repositioned
+    grappled = False       # while True, you can't flee or reposition
+
+    slow_print(f"\n{enemy.name.upper()} ENCOUNTER!")
+    while zombie_hp > 0 and player.health > 0:
+        print(f"{enemy.name.upper()} HP: {zombie_hp} | Your HP: {player.health}")
+
+        # ---------- action menu (block flee/reposition if grappled) ----------
+        actions = {"1": "Attack", "3": "Distract", "4": "Use Gauze"}
+        if not grappled:
+            actions["2"] = "Reposition (+20 Dodge)"
+            actions["5"] = "Flee"
+        action = choose("What do you do?", dict(sorted(actions.items())))
+
+        # -------------------- your turn --------------------
+        if action == "1": # Attacking
+            dmg = rng.randint(0, 4) + player.total_damage
+            slow_print(f"You hit the {enemy.name.upper()} for {dmg}!")
+            zombie_hp -= dmg
+            if zombie_hp <= 0:
+                reward = rng.randint(enemy.reward_min, enemy.reward_max)
+                if reward > 0:
+                    slow_print(f"You killed the {enemy.name.upper()}! You got ${reward}.")
+                    player.money += reward
+                else:
+                    slow_print(f"You killed the {enemy.name.upper()}!")
+                return "won"
+
+        elif action == "2":  # Reposition
+            if grappled:
+                slow_print("You're grappled! You can't reposition this turn.")
+            else:
+                combat_dodge = True
+                slow_print("\nYou reposition yourself, bracing for an attack. +20 Dodge.")
+
+        elif action == "3":  # Distract
+            slow_print("not ready yet")
+
+        elif action == "4":  # Use Gauze
+            if "Gauze" in player.armor_items:
+                heal = rng.randint(1, 3)
+                player.health = min(player.health + heal, player.max_health)
+                player.armor_items.remove("Gauze")
+                slow_print(f"You use a piece of Gauze to heal yourself. +{heal} HP.")
+            else:
+                slow_print("You don't have any Gauze!")
+
+        elif action == "5":  # Flee
+            if grappled:
+                slow_print("You're grappled! You can't flee this turn.")
+            else:
+                escape = rng.randint(0, 20) + int(player.total_luck * 1.5)
+                if escape >= enemy.flee_dc:
+                    slow_print("You successfully got away!")
+                    return "escaped"
+                else:
+                    slow_print(f"The {enemy.name.upper()} caught up to you!")
+
+        # -------------------- enemy turn --------------------
+        z_dmg = rng.randint(enemy.dmg_min, enemy.dmg_max)
+        dodge_roll = rng.randint(0, 100) + player.total_dodge + (20 if combat_dodge else 0)
+        dodged = (dodge_roll >= enemy.dodge_target)
+
+        if dodged:
+            slow_print(f"You dodged the {enemy.name.upper()}'s attack!")
+            if enemy.is_grappler and grappled:
+                slow_print("You break free from the grapple!")
+                grappled = False
+        else:
+            slow_print(f"The {enemy.name.upper()} hits you for {z_dmg}!")
+            player.health -= z_dmg
+            if player.health <= 0:
+                slow_print("You collapse...")
+                return "dead"
+            if enemy.is_grappler:
+                grappled = True
+                slow_print("The zombie has grappled you! You cannot reposition or flee until it misses an attack.")
+
+        if enemy.is_buster:
+            slow_print(f"It busted everywhere!")
+            if player.health <= 0:
+                slow_print(" You couldn't handle the juice...")
+            else:
+                return "escaped"
+
+        combat_dodge = False
+
+    return "dead" if player.health <= 0 else "won"
+
 
 # ----------------------------
 # Character creation
@@ -226,49 +353,35 @@ def character_creation(player: Player):
 # ----------------------------
 # Encounters / Actions
 # ----------------------------
-def zombie_encounter(player: Player):
+
+
+#UNDER CONSTRUCTION
+#----------------------------------------------------------
+#---------------------------------------------------------
+#---------------------------------------------------------
+#---------------------------------------------------------
+
+
+def zombie_encounter(player):
     if player.location == "Shack":
         return False
 
-    spawn_roll = random.randint(0, 10)
-    risky = (spawn_roll >= 9 and player.location != "Shack") or (spawn_roll >= 6 and player.location == "Nuclear Plant")
+    spawn = random.randint(0, 10)
+    risky = (spawn >= 8 and player.location != "Shack") or (spawn >= 6 and player.location == "Nuclear Plant")
     if not risky:
         return False
+    
+    enemy = random.choice(ENEMIES)
 
-    zombie_hp = random.randint(5, 15)
-    slow_print("\nZOMBIE ENCOUNTER!")
-    while zombie_hp > 0 and player.health > 0:
-        print(f"Zombie HP: {zombie_hp} | Your HP: {player.health}")
-        action = choose("What do you do?", {"1": "Attack", "2": "Run away"})
-        if action == "1":
-            dmg = random.randint(0, 4) + player.total_damage
-            slow_print(f"You hit the zombie for {dmg}!")
-            zombie_hp -= dmg
-            if zombie_hp <= 0:
-                reward = random.randint(1, 15)
-                slow_print(f"You killed the zombie! You got ${reward}.")
-                player.money += reward
-                break
-            z_dmg = random.randint(0, 8)
-            slow_print(f"The zombie hits you for {z_dmg}!")
-            player.health -= z_dmg
-        else:
-            escape = random.randint(0, 20) + int(player.total_luck * 1.5)
-            if escape >= 12:
-                slow_print("You successfully got away!")
-                break
-            else:
-                slow_print("The zombie caught up to you!")
-                z_dmg = random.randint(0, 5)
-                slow_print(f"The zombie hits you for {z_dmg}!")
-                player.health -= z_dmg
-
-    if player.health <= 0:
-        weeks = player.turns // 7
-        days = player.turns % 7
-        slow_print(f"\nYOU DIED\nYou lasted {weeks} week(s) and {days} day(s). ({player.turns} turns). Not bad!")
+    result = run_combat(player, enemy)
+    if result == "dead":
         return True
     return False
+
+#----------------------------------------------------------
+#---------------------------------------------------------
+#---------------------------------------------------------
+#---------------------------------------------------------
 
 def forage(player: Player):
     if player.location == "Nuclear Plant":
@@ -399,11 +512,13 @@ def gather(player: Player, resource: str):
 # ----------------------------
 def shop(player: Player):
     hutchinson_dialogues = [
-        "It's good to see a friendly face. Here's my shop.",
-        "Welcome back, old timer!",
-        f"Hittin' the lakes already, are we {player.name}?",
-        f"Ahh, {player.name}, glad to see you're safe and well!",
-        "My tackle is the best in town! Glad the youngins are getting into the spirit of fishing!"
+        "/n HUTCHINSON: It's good to see a friendly face. Here's my shop.",
+        "/n HUTCHINSON: Welcome back, old timer!",
+        f"/n HUTCHINSON: Hittin' the lakes already, are we {player.name}?",
+        f"/n HUTCHINSON: Ahh, {player.name}, glad to see you're safe and well!",
+        "/n HUTCHINSON: My tackle is the best in town! Glad the youngins are getting into the spirit of fishing!"
+        "/n HUTCHINSON: I've been around these parts a long time. Seen a lot of things... some good, some bad."
+        "/n HUTCHINSON: No zombie apocalypse will stop me from hitting the lakes!"
     ]
     slow_print(f"Mr Hutchinson greets you with a warm nod and a gruffy smile. {random.choice(hutchinson_dialogues)}")
 
