@@ -357,7 +357,6 @@ def run_combat(player, enemy: EnemyType):
 
     return "dead" if player.health <= 0 else "won"
 
-
 # ----------------------------
 # Character creation
 # ----------------------------
@@ -365,10 +364,6 @@ def character_creation(player: Player):
     slow_print("Welcome to Zombie Pro Fisher - Byte Sized!")
     time.sleep(1)
     slow_print("\n--- Character Customization ---\n")
-
-
-
-
 
     eye = choose("Choose eye color:", {
         "1": "Blue (+2 luck)",
@@ -429,7 +424,6 @@ def zombie_encounter(player):
     return False
 
 #----------------------------------------------------------
-
 
 def forage(player: Player):
     if player.location == "Nuclear Plant":
@@ -748,14 +742,6 @@ def shop(player: Player):
             slow_print("MR HUTCHINSON: Thanks for checking out my shop!")
             break
 
-
-
-# ----------------------------
-# Main loop
-# ----------------------------
-# ----------------------------
-# Main loop
-# ----------------------------
 # ----------------------------
 # Main loop
 # ----------------------------
@@ -886,11 +872,9 @@ def main():
                     slow_print(f"You escaped after surviving for {weeks} week(s) and {days} day(s). ({player.turns} turns). Congratulations!!")
                     return
 
-
     slow_print("\nGame Over. You survived for:")
     slow_print(f"{weeks % 4} week(s), and {days % 7} day(s). ({player.turns} turns).")
     slow_print("\nThanks for playing Zombie Pro Fisher - Byte Sized!")
-
 
 if __name__ == "__main__":
     main()
