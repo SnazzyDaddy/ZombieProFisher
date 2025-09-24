@@ -3,6 +3,8 @@ import platform
 import random
 import time
 from colorama import Fore, Style, init
+from dataclasses import dataclass
+
 init(autoreset=True)
 
 # ----------------------------
@@ -53,7 +55,7 @@ FISH_POOLS = {
     ],
 }
 
-# Weapon shop (name, weapon_mod_damage, cost)
+# Weapon shop (name, weapon_mod_damage, cost, is_unique)
 WEAPONS = [
     ("Knife", 1, 5, False),
     ("Machete", 2, 10, False),
@@ -67,7 +69,7 @@ WEAPONS = [
     ("Spiked Bat", 10, 400, False),
 ]
 
-# Rod shop (name, rod_luck, cost)
+# Rod shop (name, rod_luck, cost, is_unique)
 RODS = [
     ("Common Rod", 1, 5, False),
     ("Sturdy Rod", 2, 20, False),
@@ -76,7 +78,7 @@ RODS = [
     ("Jody Barrs Rod", 5, 250, True),
 ]
 
-# Armor / consumables (name, type, value, cost)
+# Armor / consumables (name, type, value, cost, is_unique)
 ARMOR = [
     ("Medkit", "heal", 2, 5, False),
     ("Nurse Aimees Power Kit", "fullheal", 0, 25, False),
@@ -85,6 +87,7 @@ ARMOR = [
     ("Clemuratan Helmet", "maxhp", 3, 150, False),
 ]
 
+# Food (name, value, cost, is_unique)
 FOOD = [
     ("Sage Cookies", 2, 6, False),
     ("Mrs Sierras Pasta", 4, 10, False),
@@ -100,14 +103,14 @@ SELL_VALUES = {
     "legendary": 18.00,
 }
 
-# Crafting (name, wood, stone, machine parts, weapon_mod or None, isBoat)
+# Crafting
 CRAFT = [
-    ("Knife",       2,  3,  0, 1, False),
-    ("Machete",     3,  7,  0, 2, False),
-    ("Pistol",      5, 10, 10, 4, False),
-    ("SMG",        10, 15, 15, 6, False),
-    ("Shotgun",    15, 20, 20, 7, False),
-    ("Boat",       75, 50, 20, None, True),
+    ("Knife", 2, 3, 0, 1, False, False),
+    ("Machete", 3, 7, 0, 2, False, False),
+    ("Pistol", 5, 10, 10, 4, False, False),
+    ("SMG", 10, 15, 15, 6, False, False),
+    ("Shotgun", 15, 20, 20, 7, False, False),
+    ("Boat", 75, 50, 20, None, True, True),
 ]
 
 # ----------------------------
@@ -161,6 +164,7 @@ class Player:
         self.armor_items = []
         self.fish_list = []  # list of fish names
         self.fish_counts = {"common": 0, "rare": 0, "epic": 0, "legendary": 0}
+        self.unique_items = []  
 
         # Flags
         self.cookbook = False
@@ -227,8 +231,6 @@ class Player:
             ability_str = f" ({', '.join(abilities)})" if abilities else ""
             print(f" - {enemy.name}{ability_str}: HP {enemy.hp_min}-{enemy.hp_max}, DMG {enemy.dmg_min}-{enemy.dmg_max}, Dodge Target {enemy.dodge_target}, Flee DC {enemy.flee_dc}")
 
-
-
     def update_stats(self):
         self.hunger = min(self.hunger, 10)
         self.health = min(self.health, self.max_health)
@@ -236,10 +238,6 @@ class Player:
             self.hunger = 0
             self.health -= 1
             slow_print("You are starving! -1 HP")
-
-
-from dataclasses import dataclass
-import random
 
 @dataclass
 class EnemyType:
@@ -576,8 +574,13 @@ def shop(player: Player):
 
         # Weapons
         if action == "1":
+            available_weapons = [w for w in WEAPONS if not w[3] or w[0] not in player.unique_items]
+            if not available_weapons:
+                slow_print("There are no weapons available.")
+                continue
+
             slow_print("WEAPON SHOP:")
-            for idx, (name, mod, cost) in enumerate(WEAPONS, start=1):
+            for idx, (name, mod, cost, unique) in enumerate(available_weapons, start=1):
                 slow_print(f"[{idx}] {name:<22} +{mod} DMG  - ${cost}")
             slow_print(f"[0] Go Back")
             choice = input("> ").strip()
@@ -585,14 +588,16 @@ def shop(player: Player):
                 continue
             try:
                 i = int(choice) - 1
-                name, mod, cost = WEAPONS[i]
-            except:
+                name, mod, cost, unique = available_weapons[i]
+            except (ValueError, IndexError):
                 slow_print("Invalid choice.")
                 continue
             if player.money >= cost:
                 player.weapon = name
                 player.weapon_mod = mod
                 player.money -= cost
+                if unique:
+                    player.unique_items.append(name)
                 slow_print(f"You bought {player.weapon}! (Weapon mod +{mod})")
             else:
                 slow_print("Not enough money.")
@@ -607,8 +612,11 @@ def shop(player: Player):
                 cc["epic"] * SELL_VALUES["epic"] +
                 cc["legendary"] * SELL_VALUES["legendary"]
             )
+            
+            available_rods = [r for r in RODS if not r[3] or r[0] not in player.unique_items]
+            
             slow_print("FISHING GOODS:")
-            for idx, (name, rluck, cost) in enumerate(RODS, start=1):
+            for idx, (name, rluck, cost, unique) in enumerate(available_rods, start=1):
                 slow_print(f"[{idx}] {name:<18} +{rluck} Luck - ${cost}")
             slow_print(f"[s] Sell your fish (+${total_cash})")
             slow_print("[0] Goodbye")
@@ -629,22 +637,29 @@ def shop(player: Player):
             else:
                 try:
                     i = int(choice) - 1
-                    name, rluck, cost = RODS[i]
-                except:
+                    name, rluck, cost, unique = available_rods[i]
+                except (ValueError, IndexError):
                     slow_print("Invalid choice.")
                     continue
                 if player.money >= cost:
                     player.fishingrod = name
                     player.rod_luck = rluck
                     player.money -= cost
+                    if unique:
+                        player.unique_items.append(name)
                     slow_print(f"You bought {player.fishingrod}! (Rod luck +{rluck})")
                 else:
                     slow_print("Not enough money.")
 
         # Armor
         elif action == "3":
+            available_armor = [a for a in ARMOR if not a[4] or a[0] not in player.unique_items]
+            if not available_armor:
+                slow_print("There is no armor available.")
+                continue
+
             slow_print("ARMOR AND PROTECTION:")
-            for idx, (name, typ, value, cost) in enumerate(ARMOR, start=1):
+            for idx, (name, typ, value, cost, unique) in enumerate(available_armor, start=1):
                 if typ == "heal": desc = f"Restore {value} HP"
                 elif typ == "fullheal": desc = "Restore full HP"
                 else: desc = f"+{value} Max HP"
@@ -656,8 +671,8 @@ def shop(player: Player):
                 continue
             try:
                 i = int(choice) - 1
-                name, typ, val, cost = ARMOR[i]
-            except:
+                name, typ, val, cost, unique = available_armor[i]
+            except (ValueError, IndexError):
                 slow_print("Invalid choice.")
                 continue
             if player.money < cost:
@@ -672,13 +687,21 @@ def shop(player: Player):
                 player.max_health += val
                 player.health += val
                 player.armor_items.append(name)
+            
             player.money -= cost
+            if unique:
+                player.unique_items.append(name)
             slow_print(f"You bought {name}!")
 
         # Crafting
         elif action == "4":
+            available_crafts = [c for c in CRAFT if not c[5] or c[0] not in player.unique_items]
+            if not available_crafts:
+                slow_print("There are no items left to craft.")
+                continue
+
             slow_print("CRAFTABLE ITEMS:")
-            for idx, (name, w, s, p, mod, isBoat) in enumerate(CRAFT, start=1):
+            for idx, (name, w, s, p, mod, unique, isBoat) in enumerate(available_crafts, start=1):
                 if isBoat:
                     slow_print(f"[{idx}] {name:<10} {w} wood, {s} stone, {p} machine parts")
                 else:
@@ -689,8 +712,8 @@ def shop(player: Player):
                 continue
             try:
                 i = int(choice) - 1
-                name, w, s, p, mod, isBoat = CRAFT[i]
-            except:
+                name, w, s, p, mod, unique, isBoat = available_crafts[i]
+            except (ValueError, IndexError):
                 slow_print("Invalid choice.")
                 continue
 
@@ -705,13 +728,20 @@ def shop(player: Player):
                     player.weapon = name
                     player.weapon_mod = mod
                     slow_print(f"You successfully crafted a {name}! (Weapon mod +{mod})")
+                if unique:
+                    player.unique_items.append(name)
             else:
                 slow_print("Not enough resources to craft that.")
 
         # Food
         elif action == "5":
+            available_food = [f for f in FOOD if not f[3] or f[0] not in player.unique_items]
+            if not available_food:
+                slow_print("There is no food available.")
+                continue
+
             slow_print("SAGE SNACK SHACK:")
-            for idx, (name, val, cost) in enumerate(FOOD, start=1):
+            for idx, (name, val, cost, unique) in enumerate(available_food, start=1):
                 if name == "Missy's Cookbook":
                     desc = "Lessens chance of foraging poisonous food"
                     slow_print(f"[{idx}] {name:<22} {desc} - ${cost}")
@@ -724,8 +754,8 @@ def shop(player: Player):
                 continue
             try:
                 i = int(choice) - 1
-                name, val, cost = FOOD[i]
-            except:
+                name, val, cost, unique = available_food[i]
+            except (ValueError, IndexError):
                 slow_print("Invalid choice.")
                 continue
             if player.money < cost:
@@ -736,6 +766,8 @@ def shop(player: Player):
             else:
                 player.hunger += val
             player.money -= cost
+            if unique:
+                player.unique_items.append(name)
             slow_print(f"You bought {name}!")
 
         else:
