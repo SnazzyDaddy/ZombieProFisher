@@ -94,10 +94,10 @@ FOOD = [
 
 # Sell values per category
 SELL_VALUES = {
-    "common": 3,
-    "rare": 5,
-    "epic": 7,
-    "legendary": 18,
+    "common": 2.50,
+    "rare": 5.00,
+    "epic": 8.25,
+    "legendary": 18.00,
 }
 
 # Crafting (name, wood, stone, machine parts, weapon_mod or None, isBoat)
@@ -182,8 +182,9 @@ class Player:
         return self.dodge + self.dodge_mod
     
     def statscore(self):
-        print(f"\n{self.name}: HP {self.health}/{self.max_health} || HUNGER: {self.hunger} || XP: {self.xp}/{self.xp_until_level}")
-        print("____________________________________________")
+        print(f"\n{self.name}: HP {self.health}/{self.max_health} || HUNGER: {self.hunger} || XP: {self.xp}/{self.xp_until_level} || ${self.money}")
+        print(f"LOCATION: {self.location} || DAY: {(self.turns // 3) + 1} || TIME: {['Morning', 'Noon', 'Night'][self.turns % 3]}")
+        print("________________________________________________________________")
 
     def stats(self):
         print(f"\nNAME: {self.name}")
@@ -433,6 +434,7 @@ def zombie_encounter(player):
 def forage(player: Player):
     if player.location == "Nuclear Plant":
         slow_print("You're not sure there's anything safe to eat here...")
+        player.hunger -= 1
         # Stranger (Hudson) encounter (as per C++ flow)
         if random.randint(0, 10) == 5:
             slow_print("\nYou search through the maze of Seqouyah Power Plant.")
@@ -482,9 +484,9 @@ def forage(player: Player):
                 return
 
             # Milk / Sugar
-            final_choice = choose("Choose:", {"1": "The milk.", "2": "The sugar."})
+            final_choice = choose("Choose:", {"1": "The juice.", "2": "The sugar."})
             if final_choice == "1":
-                slow_print("You choke down a vial of solid white liquid. Your vision blurs... you feel... awakened.")
+                slow_print("You choke down a vial of solid purple liquid. Your vision blurs... you feel... awakened.")
                 slow_print("Luck +5, Damage +2")
                 player.base_luck += 5
                 player.base_damage += 2
@@ -496,10 +498,10 @@ def forage(player: Player):
         return
 
     if player.location == "Shack":
-        slow_print("Mr. Hutchinson tells you to stop snooping around in his shop.")
+        slow_print("Mr. Hutchinson politely tells you there's nothing to forage here.")
         return
 
-    # Normal forage (C++ thresholds w/ cookbook effect)
+    # Normal forage
     player.hunger -= 1
     result = random.randint(-10, 32) + int(player.total_luck * 1.8)
     if result <= 0:
@@ -509,16 +511,16 @@ def forage(player: Player):
         player.health -= hp_loss
         slow_print(f"Yuck! You ate something you shouldn't have. -{hp_loss} HP.")
     elif (11 <= result <= 20 and not player.cookbook) or (6 <= result <= 20 and player.cookbook):
-        slow_print("You found some nuts and berries. +2 Hunger")
+        slow_print("You found some nuts and berries. +1 Hunger")
         player.hunger += 2
     elif 21 <= result <= 25:
-        slow_print("You're not sure what you found, but the geiger counter didn't beep. +3 Hunger.")
+        slow_print("You're not sure what you found, but the geiger counter didn't beep. +2 Hunger.")
         player.hunger += 3
     elif 26 <= result <= 30:
-        slow_print("You trapped some local fauna and ate a well-cooked meal. +4 Hunger.")
+        slow_print("You found unexpired canned food. +3 Hunger.")
         player.hunger += 4
     elif 31 <= result <= 40:
-        slow_print("You found unexpired canned food. +5 Hunger.")
+        slow_print("You trapped some local fauna and ate a well-cooked meal. +4 Hunger.")
         player.hunger += 5
 
 def fishing(player: Player):
@@ -562,9 +564,9 @@ def shop(player: Player):
         "\n HUTCHINSON: Welcome back, old timer!",
         f"\n HUTCHINSON: Hittin' the lakes already, are we {player.name}?",
         f"\n HUTCHINSON: Ahh, {player.name}, glad to see you're safe and well!",
-        "\n HUTCHINSON: My tackle is the best in town! Glad the youngins are getting into the spirit of fishing!"
-        "\n HUTCHINSON: I've been around these parts a long time. Seen a lot of things... some good, some bad."
-        "\n HUTCHINSON: No zombie apocalypse will stop me from hitting the lakes!"
+        "\n HUTCHINSON: My tackle is the best in town! Glad the youngins are getting into the spirit of fishing!",
+        "\n HUTCHINSON: I've been around these parts a long time. Seen a lot of things... some good, some bad.",
+        "\n HUTCHINSON: No zombie apocalypse will stop me from hitting the lakes!",
     ]
     slow_print(f"Mr Hutchinson greets you with a warm nod and a gruffy smile. {random.choice(hutchinson_dialogues)}")
 
@@ -746,6 +748,8 @@ def shop(player: Player):
             slow_print("MR HUTCHINSON: Thanks for checking out my shop!")
             break
 
+
+
 # ----------------------------
 # Main loop
 # ----------------------------
@@ -762,6 +766,8 @@ def main():
     while player.health > 0:
         player.turns += 1
         player.update_stats()
+        weeks = player.turns // 7
+        days = player.turns // 3
 
         if zombie_encounter(player):
             break
