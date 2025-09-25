@@ -4,6 +4,7 @@ import random
 import time
 from colorama import Fore, Style, init
 from dataclasses import dataclass
+import keyboard
 
 init(autoreset=True)
 
@@ -17,15 +18,23 @@ def clear_screen():
         os.system('clear')
 
 def slow_print(text, delay=0.02):
-    for c in text:
-        print(c, end='', flush=True)
+    for char in text:
+        print(char, end='', flush=True)
         time.sleep(delay)
+        if keyboard.is_pressed(' '): # Checks if the spacebar is pressed
+            remaining_text = text.split(char, 1)[1]
+            print(remaining_text, end='', flush=True)
+            break
     print()
 
 def quick_print(text, delay=0.01):
-    for c in text:
-        print(c, end='', flush=True)
+    for char in text:
+        print(char, end='', flush=True)
         time.sleep(delay)
+        if keyboard.is_pressed(' '): # Checks if the spacebar is pressed
+            remaining_text = text.split(char, 1)[1]
+            print(remaining_text, end='', flush=True)
+            break
     print()
 
 def choose(prompt, options):
