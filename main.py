@@ -22,6 +22,12 @@ def slow_print(text, delay=0.02):
         time.sleep(delay)
     print()
 
+def quick_print(text, delay=0.01):
+    for c in text:
+        print(c, end='', flush=True)
+        time.sleep(delay)
+    print()
+
 def choose(prompt, options):
     while True:
         slow_print(prompt)
